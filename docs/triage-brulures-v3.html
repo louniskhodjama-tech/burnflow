@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Triage brûlés — carte corporelle</title>
+<style>
+  :root{
+    --bg:#EEF1F3; --card:#fff; --ink:#14202B; --muted:#5B6B78; --line:#D6DDE2; --skin:#E3E8EC;
+    --d1:#F6C9BE; --d2s:#E48A72; --d2p:#B23A48; --d3:#3B1F2B;
+    --chir:#2E7D5B; --centre:#B23A48;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;font-size:16px;line-height:1.35;font-variant-numeric:tabular-nums}
+  header{padding:14px 16px 6px}
+  header h1{font-size:14px;margin:0;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  main{padding:0 12px 210px;max-width:640px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+  .card h2{font-size:12px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .field{flex:1 1 120px}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  select,input[type=number],input[type=text]{width:100%;min-height:48px;font-size:17px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#FAFBFC;color:var(--ink)}
+
+  /* Body map */
+  .map{position:relative}
+  .views{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:0 8px 4px;text-transform:uppercase;letter-spacing:.06em}
+  svg{width:100%;height:auto;display:block;touch-action:manipulation}
+  .r{fill:var(--skin);stroke:#fff;stroke-width:1.5;cursor:pointer;transition:fill .12s}
+  .r:hover{stroke:var(--ink)}
+  .r.sel{stroke:var(--ink);stroke-width:2.5}
+  .r:focus{outline:none;stroke:#2F6FED;stroke-width:2.5}
+  .lbl{font-size:8px;fill:var(--muted);pointer-events:none;text-anchor:middle}
+  .badge{font-size:9px;font-weight:700;fill:#fff;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:rgba(0,0,0,.35);stroke-width:2}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid rgba(0,0,0,.08)}
+  .legend .d1::before{background:var(--d1)}.legend .d2s::before{background:var(--d2s)}.legend .d2p::before{background:var(--d2p)}.legend .d3::before{background:var(--d3)}
+
+  /* Bubble */
+  .bubble{position:absolute;z-index:5;width:min(300px,calc(100% - 16px));background:var(--ink);color:#fff;border-radius:14px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none}
+  .bubble.show{display:block}
+  .bubble::after{content:"";position:absolute;width:14px;height:14px;background:var(--ink);transform:rotate(45deg);top:-7px;left:var(--ax,50%);margin-left:-7px}
+  .bubble.below::after{top:auto;bottom:-7px}
+  .bubble .t{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .bubble .t b{font-size:16px}
+  .bubble .t span{font-size:12px;color:#B8C4CE}
+  .bubble small{display:block;font-size:11px;color:#B8C4CE;margin:6px 0 4px;text-transform:uppercase;letter-spacing:.06em}
+  .seg{display:flex;gap:4px}
+  .seg button{flex:1;min-height:42px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);border-radius:9px;font-size:14px;color:#fff;padding:4px 2px}
+  .seg button[aria-pressed=true]{background:#fff;color:var(--ink);border-color:#fff;font-weight:600}
+  .seg.depth button{position:relative;padding-left:18px;font-size:12px}
+  .seg.depth button::before{content:"";position:absolute;left:6px;top:50%;transform:translateY(-50%);width:9px;height:9px;border-radius:2px}
+  .seg.depth button[data-v="1"]::before{background:var(--d1)}
+  .seg.depth button[data-v="2s"]::before{background:var(--d2s)}
+  .seg.depth button[data-v="2p"]::before{background:var(--d2p)}
+  .seg.depth button[data-v="3"]::before{background:var(--d3)}
+  .bubble .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px}
+  .bubble .foot label{display:flex;align-items:center;gap:6px;color:#fff;font-size:13px;margin:0}
+  .bubble .foot input{width:18px;height:18px}
+  .bubble .close{background:none;border:0;color:#B8C4CE;font-size:13px;text-decoration:underline}
+
+  .flags label{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;color:var(--ink);margin:0;border-bottom:1px solid var(--line)}
+  .flags label:last-child{border-bottom:0}
+  .flags input{width:22px;height:22px}
+  .note{font-size:12px;color:var(--muted)}
+  .actions{display:flex;gap:8px;margin-top:4px}
+  .actions button{flex:1;min-height:48px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:15px}
+  .actions button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  pre{white-space:pre-wrap;font-size:12px;background:#F5F7F8;padding:10px;border-radius:10px;border:1px solid var(--line);margin:8px 0 0}
+
+  /* Readout */
+  .readout{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px rgba(0,0,0,.18)}
+  .readout>div{max-width:640px;margin:0 auto}
+  .top{display:flex;justify-content:space-between;align-items:flex-end}
+  .scb{font-size:40px;font-weight:700;line-height:1;letter-spacing:-.02em}
+  .scb small{font-size:14px;font-weight:500;color:#B8C4CE;margin-left:4px}
+  .sub{font-size:13px;color:#B8C4CE;margin-top:4px}
+  .cls{font-size:15px;font-weight:700;padding:7px 11px;border-radius:8px;display:inline-block;text-align:right}
+  .cls.chir{background:var(--chir)} .cls.rea{background:#C77700} .cls.centre{background:var(--centre)}
+  .park{font-size:13px;color:#DDE5EA;margin-top:8px}
+  .why{font-size:12px;color:#B8C4CE;margin-top:4px}
+  .why span{display:inline-block;background:rgba(255,255,255,.12);padding:2px 7px;border-radius:6px;margin:2px 4px 0 0}
+</style>
+</head>
+<body>
+<header><h1>Triage brûlés · carte corporelle</h1></header>
+<main>
+  <section class="card">
+    <h2>Patient</h2>
+    <div class="row">
+      <div class="field"><label for="bracelet">ID bracelet</label><input type="text" id="bracelet" placeholder="JJ-0000" autocomplete="off"></div>
+      <div class="field"><label for="age">Âge (ans)</label><input type="number" id="age" inputmode="decimal" min="0" max="120" placeholder="34"></div>
+      <div class="field"><label for="weight">Poids est. (kg)</label><input type="number" id="weight" inputmode="decimal" min="1" max="250" placeholder="70"></div>
+      <div class="field"><label for="mech">Mécanisme</label><select id="mech"><option value="flamme">Flamme</option><option value="contact">Contact / chaleur</option><option value="elec">Électrique</option><option value="chim">Chimique</option></select></div>
+      <div class="field"><label for="hours">Délai (h)</label><input type="number" id="hours" inputmode="decimal" min="0" max="72" step="0.5" placeholder="2"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Touchez une zone</h2>
+    <div class="map" id="map">
+      <div class="views"><span>Face</span><span>Dos</span></div>
+      <svg id="body" viewBox="0 0 440 430" xmlns="http://www.w3.org/2000/svg" aria-label="Carte corporelle, face et dos"></svg>
+      <div class="bubble" id="bubble" role="dialog" aria-modal="false">
+        <div class="t"><b id="bName">Zone</b><span id="bPct"></span></div>
+        <small>1 · Fraction atteinte</small>
+        <div class="seg frac" id="bFrac"></div>
+        <small>2 · Profondeur dominante — la bulle se ferme quand les deux sont choisis</small>
+        <div class="seg depth" id="bDepth"></div>
+        <div class="foot">
+          <label id="bCircWrap"><input type="checkbox" id="bCirc"> Circonférentielle</label>
+          <button class="close" id="bClose">Fermer</button>
+        </div>
+      </div>
+    </div>
+    <div class="legend"><span class="d1">1er (exclu SCB)</span><span class="d2s">2e superficiel</span><span class="d2p">2e profond</span><span class="d3">3e</span></div>
+  </section>
+
+  <section class="card">
+    <h2>Autres éléments</h2>
+    <div class="flags">
+      <label><input type="checkbox" id="f_inhal"> Inhalation suspectée</label>
+      <label><input type="checkbox" id="f_clos"> Incendie en espace clos</label>
+      <label><input type="checkbox" id="f_trauma"> Lésion traumatique associée</label>
+      <label><input type="checkbox" id="f_comorb"> Comorbidité significative</label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Fiche de transfert</h2>
+    <div class="actions"><button class="primary" id="btnFiche">Générer</button><button id="btnReset">Réinitialiser</button></div>
+    <pre id="fiche" hidden></pre>
+  </section>
+</main>
+
+<div class="readout" role="status" aria-live="polite"><div>
+  <div class="top">
+    <div><div class="scb"><span id="scbTotal">0</span><small>% SCB</small></div>
+      <div class="sub">dont <b id="scbDeep">0</b> % profond · <span id="ageBand">âge ?</span></div></div>
+    <span class="cls chir" id="orient">Chirurgie</span>
+  </div>
+  <div class="park" id="park">Parkland : renseignez poids.</div>
+  <div class="why" id="why"></div>
+</div></div>
+
+<script>
+/* ===================== CONFIG — À VALIDER PAR LE BRÛLOLOGUE ===================== */
+const BANDS=[{max:1,label:"0–1 an"},{max:5,label:"1–4 ans"},{max:10,label:"5–9 ans"},{max:15,label:"10–14 ans"},{max:16,label:"15 ans"},{max:999,label:"adulte"}];
+// Lund-Browder — % par tranche d'âge (0-1 | 1-4 | 5-9 | 10-14 | 15 | adulte)
+const REGIONS={
+  head: {name:"Tête",            pct:[19,17,13,11,9,7], flag:"face"},
+  neck: {name:"Cou",             pct:[2,2,2,2,2,2], circ:true},
+  tant: {name:"Tronc antérieur", pct:[13,13,13,13,13,13], circ:true},
+  tpost:{name:"Tronc postérieur",pct:[13,13,13,13,13,13], circ:true},
+  butt: {name:"Fesses",          pct:[5,5,5,5,5,5]},
+  genit:{name:"Périnée / OGE",   pct:[1,1,1,1,1,1], flag:"genit"},
+  rua:{name:"Bras D",pct:[4,4,4,4,4,4],circ:true},   rfa:{name:"Avant-bras D",pct:[3,3,3,3,3,3],circ:true},   rh:{name:"Main D",pct:[2.5,2.5,2.5,2.5,2.5,2.5],flag:"mains"},
+  lua:{name:"Bras G",pct:[4,4,4,4,4,4],circ:true},   lfa:{name:"Avant-bras G",pct:[3,3,3,3,3,3],circ:true},   lh:{name:"Main G",pct:[2.5,2.5,2.5,2.5,2.5,2.5],flag:"mains"},
+  rth:{name:"Cuisse D",pct:[5.5,6.5,8,8.5,9,9.5],circ:true}, rlg:{name:"Jambe D",pct:[5,5,5.5,6,6.5,7],circ:true}, rft:{name:"Pied D",pct:[3.5,3.5,3.5,3.5,3.5,3.5],flag:"pieds"},
+  lth:{name:"Cuisse G",pct:[5.5,6.5,8,8.5,9,9.5],circ:true}, llg:{name:"Jambe G",pct:[5,5,5.5,6,6.5,7],circ:true}, lft:{name:"Pied G",pct:[3.5,3.5,3.5,3.5,3.5,3.5],flag:"pieds"},
+};
+const FRACTIONS=[{v:0,l:"—"},{v:.25,l:"¼"},{v:.5,l:"½"},{v:.75,l:"¾"},{v:1,l:"Tout"}];
+const DEPTHS=[{v:"1",l:"1er"},{v:"2s",l:"2e sup"},{v:"2p",l:"2e prof"},{v:"3",l:"3e"}];
+// Règles d'orientation (telles que définies par le Dr Lounis Khodja)
+const RULES={
+  reaSCB:20,           // SCB ≥ 20 % sans signe de gravité → réa
+  childBelow:10,       // ISBI : âge < 10 ans
+  elderlyAbove:50,     // ISBI : âge > 50 ans
+  thirdDegreeSign:5,   // 3e degré ≥ 5 % compte comme signe de gravité
+  parklandMlKgPct:4,
+};
+// Signes de gravité ISBI/ABA : face, mains, pieds, OGE/périnée, articulations majeures,
+// inhalation, électrique/chimique, circonférentielle, 3e degré, âge extrême, comorbidité, trauma
+// Classes : SCB<20 sans signe → chirurgie | SCB<20 avec signe → réa (avis brûlologue)
+//           SCB≥20 sans signe → réa | SCB≥20 avec signe → centre des brûlés
+/* ================================================================================ */
+
+const state={}; Object.keys(REGIONS).forEach(k=>state[k]={frac:0,depth:null,circ:false});
+const $=s=>document.querySelector(s);
+const band=a=>(a==null||isNaN(a))?null:Math.max(0,BANDS.findIndex(b=>a<b.max));
+const DCOL={"1":"#F6C9BE","2s":"#E48A72","2p":"#B23A48","3":"#3B1F2B"};
+
+/* ---- Figure : formes (x,y,w,h,rx) ; vue face à x=0, vue dos à x=220 ---- */
+function rr(id,x,y,w,h,rx){return {id,x,y,w,h,rx};}
+const FRONT=[ // patient droit = gauche de l'écran
+  rr("neck",90,66,24,18,6), rr("tant",60,84,84,116,18), rr("genit",90,200,24,14,6),
+  rr("rua",26,88,30,62,12), rr("rfa",24,152,28,58,10), rr("rh",20,212,30,34,12),
+  rr("lua",148,88,30,62,12), rr("lfa",152,152,28,58,10), rr("lh",154,212,30,34,12),
+  rr("rth",62,214,38,92,14), rr("rlg",63,308,34,80,12), rr("rft",56,390,40,26,10),
+  rr("lth",104,214,38,92,14), rr("llg",107,308,34,80,12), rr("lft",108,390,40,26,10),
+];
+const BACK=[ // dos : patient droit = droite de l'écran
+  rr("neck",310,66,24,18,6), rr("tpost",280,84,84,104,18), rr("butt",280,188,84,26,10),
+  rr("lua",246,88,30,62,12), rr("lfa",244,152,28,58,10), rr("lh",240,212,30,34,12),
+  rr("rua",368,88,30,62,12), rr("rfa",372,152,28,58,10), rr("rh",374,212,30,34,12),
+  rr("lth",282,214,38,92,14), rr("llg",283,308,34,80,12), rr("lft",276,390,40,26,10),
+  rr("rth",324,214,38,92,14), rr("rlg",327,308,34,80,12), rr("rft",328,390,40,26,10),
+];
+function buildSVG(){
+  const svg=$("#body"); const NS="http://www.w3.org/2000/svg"; let html="";
+  const heads=[["head",102,36],["head",322,36]];
+  heads.forEach(([id,cx,cy])=>{html+=`<ellipse class="r" data-id="${id}" tabindex="0" cx="${cx}" cy="${cy}" rx="26" ry="30"/>`;});
+  [...FRONT,...BACK].forEach(s=>{html+=`<rect class="r" data-id="${s.id}" tabindex="0" x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="${s.rx}"/>`;});
+  // badges (SCB par zone) — un par forme
+  [["head",102,36],["head",322,36]].forEach(([id,cx,cy])=>html+=`<text class="badge" data-badge="${id}" x="${cx}" y="${cy+4}"></text>`);
+  [...FRONT,...BACK].forEach(s=>html+=`<text class="badge" data-badge="${s.id}" x="${s.x+s.w/2}" y="${s.y+s.h/2+3}"></text>`);
+  svg.innerHTML=html;
+  svg.querySelectorAll(".r").forEach(el=>{
+    el.addEventListener("click",e=>openBubble(el,e));
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openBubble(el,e);}});
+  });
+}
+
+/* ---- Bulle ---- */
+let current=null;
+function openBubble(el,e){
+  current=el.dataset.id; const r=REGIONS[current], s=state[current];
+  document.querySelectorAll(".r").forEach(x=>x.classList.toggle("sel",x.dataset.id===current));
+  $("#bName").textContent=r.name;
+  const bi=band(parseFloat($("#age").value)); $("#bPct").textContent=`${r.pct[bi==null?5:bi]} % de la surface corporelle`;
+  $("#bFrac").innerHTML=FRACTIONS.map(f=>`<button type="button" data-f="${f.v}" aria-pressed="${s.frac===f.v}">${f.l}</button>`).join("");
+  $("#bDepth").innerHTML=DEPTHS.map(d=>`<button type="button" data-v="${d.v}" aria-pressed="${s.depth===d.v}">${d.l}</button>`).join("");
+  $("#bCircWrap").style.visibility=r.circ?"visible":"hidden"; $("#bCirc").checked=s.circ;
+  // Validité : fraction ET profondeur choisies → la bulle se ferme. « — » efface la zone et ferme.
+  const refresh=()=>{ $("#bFrac").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",parseFloat(x.dataset.f)===s.frac));
+                      $("#bDepth").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===s.depth)); };
+  const done=()=>{compute(); if(s.frac>0&&s.depth){$("#bClose").click();} else refresh();};
+  $("#bFrac").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.frac=parseFloat(b.dataset.f); if(s.frac===0){s.depth=null;s.circ=false;compute();$("#bClose").click();return;} done();});
+  $("#bDepth").querySelectorAll("button").forEach(b=>b.onclick=()=>{s.depth=b.dataset.v; done();});
+  $("#bCirc").onchange=()=>{s.circ=$("#bCirc").checked;compute();};
+  // position : sous la zone tapée, flèche alignée sur le point tapé
+  const map=$("#map"), bb=$("#bubble"), mr=map.getBoundingClientRect(), er=el.getBoundingClientRect();
+  bb.classList.add("show");
+  const bw=bb.offsetWidth, bh=bb.offsetHeight;
+  let left=er.left-mr.left+er.width/2-bw/2; left=Math.max(8,Math.min(left,mr.width-bw-8));
+  let top=er.bottom-mr.top+10, below=false;
+  if(top+bh>mr.height-4){ top=er.top-mr.top-bh-10; below=true; if(top<0)top=8; }
+  bb.style.left=left+"px"; bb.style.top=top+"px"; bb.classList.toggle("below",below);
+  bb.style.setProperty("--ax",(er.left-mr.left+er.width/2-left)+"px");
+}
+$("#bClose").onclick=()=>{ $("#bubble").classList.remove("show"); document.querySelectorAll(".r").forEach(x=>x.classList.remove("sel")); current=null; };
+
+/* ---- Calcul ---- */
+function paint(){
+  document.querySelectorAll(".r").forEach(el=>{
+    const s=state[el.dataset.id];
+    if(s.frac>0&&s.depth){ el.style.fill=DCOL[s.depth]; el.style.fillOpacity=(.4+.6*s.frac).toFixed(2); }
+    else { el.style.fill=""; el.style.fillOpacity=""; }
+  });
+  const bi=band(parseFloat($("#age").value));
+  document.querySelectorAll("[data-badge]").forEach(t=>{
+    const s=state[t.dataset.badge], p=REGIONS[t.dataset.badge].pct[bi==null?5:bi];
+    t.textContent=(s.frac>0&&s.depth&&s.depth!=="1")?(Math.round(p*s.frac*10)/10)+"%":(s.frac>0?"1er":"");
+  });
+}
+function compute(){
+  const age=parseFloat($("#age").value), w=parseFloat($("#weight").value), h=parseFloat($("#hours").value);
+  const bi=band(age); $("#ageBand").textContent=bi==null?"âge ?":BANDS[bi].label;
+  let scb=0,deep=0,third=0; const flags=new Set(), circ=[];
+  for(const id in REGIONS){ const s=state[id]; if(s.frac<=0||!s.depth||s.depth==="1")continue;
+    const a=REGIONS[id].pct[bi==null?5:bi]*s.frac; scb+=a;
+    if(s.depth==="2p"||s.depth==="3")deep+=a; if(s.depth==="3")third+=a;
+    if(REGIONS[id].flag)flags.add(REGIONS[id].flag); if(s.circ)circ.push(REGIONS[id].name); }
+  scb=Math.round(scb*10)/10; deep=Math.round(deep*10)/10;
+  $("#scbTotal").textContent=scb; $("#scbDeep").textContent=deep; paint();
+
+  // Orientation — critères ISBI, objectif : décharger les centres des brûlés
+  const why=[]; const signs=[];
+  if(flags.has("face"))signs.push("face"); if(flags.has("mains"))signs.push("mains"); if(flags.has("pieds"))signs.push("pieds");
+  if(flags.has("genit"))signs.push("périnée/OGE");
+  if($("#f_inhal").checked)signs.push("inhalation");
+  if($("#f_clos").checked&&flags.has("face"))signs.push("espace clos + face");
+  if($("#mech").value==="elec")signs.push("électrique"); if($("#mech").value==="chim")signs.push("chimique");
+  if(circ.length)signs.push("circonférentielle : "+circ.join(", "));
+  if(third>=RULES.thirdDegreeSign)signs.push(`3e degré ≥ ${RULES.thirdDegreeSign} %`);
+  if(!isNaN(age)&&age<RULES.childBelow)signs.push("enfant <"+RULES.childBelow+" ans");
+  if(!isNaN(age)&&age>RULES.elderlyAbove)signs.push(">"+RULES.elderlyAbove+" ans");
+  if($("#f_trauma").checked)signs.push("trauma associé"); if($("#f_comorb").checked)signs.push("comorbidité");
+  const big=scb>=RULES.reaSCB, grave=signs.length>0;
+  let k=0; if(big&&grave)k=2; else if(big||grave)k=1;
+  const LAB=["Service de chirurgie","Réanimation"+(grave&&!big?" · avis brûlologue":""),"Centre des brûlés"], CSS=["chir","rea","centre"];
+  if(big)why.push(`SCB ${scb} % ≥ ${RULES.reaSCB} %`); why.push(...signs);
+  const o=$("#orient"); o.textContent=LAB[k]; o.className="cls "+CSS[k]; const centre=k;
+  $("#why").innerHTML=why.map(x=>`<span>${x}</span>`).join("");
+
+  let txt="Parkland : renseignez poids.";
+  if(!isNaN(w)&&scb>0){
+    const total=Math.round(RULES.parklandMlKgPct*w*scb), first8=Math.round(total/2);
+    const el=isNaN(h)?0:Math.min(h,8), rate=Math.round(first8/Math.max(8-el,1));
+    let maint=0; if(w<30) maint=Math.round(w<=10?4*w:w<=20?40+2*(w-10):60+(w-20));
+    txt=`Parkland ${total} ml/24 h · ${first8} ml sur H0–H8`+(isNaN(h)?"":` → ≈ ${rate} ml/h pour les ${Math.max(8-el,0).toFixed(1)} h restantes`);
+    if(maint)txt+=` · + entretien enfant ≈ ${maint} ml/h`;
+    txt+=" · diurèse cible 0,5 ml/kg/h (1 ml/kg/h enfant)";
+  }
+  $("#park").textContent=txt;
+  return {scb,deep,third,k,why};
+}
+function fiche(){
+  const r=compute();
+  const les=Object.keys(REGIONS).filter(k=>state[k].frac>0).map(k=>{const s=state[k];return `- ${REGIONS[k].name} : ${FRACTIONS.find(f=>f.v===s.frac).l} · ${DEPTHS.find(d=>d.v===s.depth)?.l||"?"}${s.circ?" · circonférentielle":""}`;}).join("\n")||"- aucune zone";
+  const t=`FICHE DE TRANSFERT — BRÛLÉ
+ID bracelet : ${$("#bracelet").value||"—"}   Âge : ${$("#age").value||"—"} ans   Poids est. : ${$("#weight").value||"—"} kg   Délai : ${$("#hours").value||"—"} h
+SCB (2e+) : ${r.scb} %   dont profond : ${r.deep} %   3e degré : ${Math.round(r.third*10)/10} %
+Orientation : ${["SERVICE DE CHIRURGIE","RÉANIMATION","CENTRE DES BRÛLÉS"][r.k]}
+Critères : ${r.why.join(" ; ")||"aucun"}
+Lésions :
+${les}
+${$("#park").textContent}
+${new Date().toLocaleString("fr-DZ")} — proposition à valider par le médecin.`;
+  const pre=$("#fiche"); pre.textContent=t; pre.hidden=false;
+  if(navigator.clipboard)navigator.clipboard.writeText(t).catch(()=>{});
+}
+buildSVG();
+["#age","#weight","#hours","#mech","#f_inhal","#f_clos","#f_trauma","#f_comorb"].forEach(s=>$(s).addEventListener("input",compute));
+$("#btnFiche").onclick=fiche; $("#btnReset").onclick=()=>location.reload();
+document.addEventListener("click",e=>{ if(e.target.isConnected && !e.target.closest("#map")) $("#bClose").click(); });
+compute();
+</script>
+</body>
+</html>
