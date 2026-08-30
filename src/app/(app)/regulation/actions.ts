@@ -200,9 +200,6 @@ export async function setUserActiveAction(
   return { ok: true };
 }
 
-/** Durées de validité proposées pour un code (heures). */
-export const CODE_DURATIONS_H = [24, 72, 168, 720] as const; // 24 h · 3 j · 7 j · 30 j
-
 /** Génère un code personnel (affiché UNE fois, stocké haché, réutilisable — D-013). */
 export async function generateCodeAction(
   userId: string,

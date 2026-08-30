@@ -162,3 +162,18 @@ trois fois. Réponse : l'écran d'erreur fait un window.location.reload()
 une fois (garde anti-boucle 60 s via sessionStorage) — l'utilisateur de
 terrain ne voit plus qu'un bref clignotement au pire. reset() de Next était
 insuffisant : il rejoue la requête périmée sans récupérer le build à jour.
+
+## D-019 — Le bug de la création de compte : export non-fonction dans un fichier « use server » (2026-08-30)
+`export const CODE_DURATIONS_H = [24, 72, 168, 720]` (constante MORTE, jamais
+importée) dans `regulation/actions.ts` : Next n'autorise que des fonctions
+async en export d'un fichier « use server » et rejette le module entier À
+L'EXÉCUTION en production — build vert, dev fonctionnel, E2E vert (le
+scénario ne soumet aucune action de ce module : trou de couverture), mais
+chaque soumission (créer un compte, générer/prolonger/révoquer un code,
+enregistrer les Seuils) explosait avec un digest opaque. Reproduit en local
+sur clone pg_dump de la base de production + environnement identique, via
+Playwright ; corrigé (suppression de l'export) ; re-vérifié : compte créé.
+Garde-fou ajouté : test unitaire qui scanne les fichiers « use server » et
+refuse tout export non-« async function » (tests/unit/use-server-exports).
+Leçon de méthode : reproduire le GESTE de l'utilisateur, pas seulement le
+chargement de ses pages.
