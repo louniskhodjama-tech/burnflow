@@ -147,3 +147,18 @@ crons enveloppés (échec journalisé, jamais fatal), `pool.on("error")`,
 `keepAlive` + `idleTimeoutMillis` 30 s, et filets `unhandledRejection` /
 `uncaughtException` qui journalisent sans éteindre. Sur un outil de crise,
 la disponibilité prime sur le fail-fast.
+
+## D-018 — Fenêtres périmées après redéploiement : rechargement complet (2026-08-30)
+Reproduction méthodique du « toujours la même erreur » en production : build,
+données (clone pg_dump de la base de production sur Postgres 17 local) et
+variables d'environnement identiques → AUCUNE erreur. La cause n'était ni le
+code ni les données : une fenêtre restée ouverte (PWA installée, onglet)
+pendant un redéploiement continue de soumettre les identifiants d'actions
+serveur et de demander les chunks de L'ANCIEN build — le serveur répond par
+une exception (digest) à chaque interaction, déterministe, jusqu'au
+rechargement complet. Trois redéploiements le même jour = fenêtre cassée
+trois fois. Réponse : l'écran d'erreur fait un window.location.reload()
+(bouton « Recharger l'application »), plus un rechargement AUTOMATIQUE tenté
+une fois (garde anti-boucle 60 s via sessionStorage) — l'utilisateur de
+terrain ne voit plus qu'un bref clignotement au pire. reset() de Next était
+insuffisant : il rejoue la requête périmée sans récupérer le build à jour.

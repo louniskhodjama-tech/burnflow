@@ -7,7 +7,6 @@
 
 export default function GlobalError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -32,7 +31,7 @@ export default function GlobalError({
             Rien n&apos;a été perdu : réessayez.
           </p>
           <button
-            onClick={() => reset()}
+            onClick={() => window.location.reload()}
             style={{
               width: "100%",
               padding: "12px 16px",
