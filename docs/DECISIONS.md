@@ -120,3 +120,15 @@ la fiche de transfert et visibles de l'hôpital d'accueil.
   la demande côté référent (« Gestes réalisés sur le terrain »).
 - Droits : seul l'urgentiste du site coche/décoche ; référent (après
   acceptation) et régulateur lisent.
+
+## D-016 — Écrans d'erreur français + résilience aux incidents passagers (2026-08-30)
+Constat en production (PivoCloud) : instabilité intermittente de la
+plateforme — ~1 requête sur 10 reste sans réponse ~21 s, toutes routes
+confondues (y compris /login sans base) ; lorsqu'un rendu serveur est touché
+(timeout de connexion base à 10 s), Next affichait sa page anglaise
+« Application error » + digest. Base de données saine (migrations OK, aucun
+verrou, aucune requête longue). Réponse : `error.tsx` et `global-error.tsx`
+en français avec bouton « Réessayer » — en situation de crise, l'utilisateur
+réessaie d'un geste, aucune donnée n'est perdue (écritures
+transactionnelles). Si l'instabilité persiste : Restart/Redeploy du
+conteneur, vérifier le nombre d'instances, logs runtime, support PivoCloud.
