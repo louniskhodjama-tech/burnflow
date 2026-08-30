@@ -1,136 +1,176 @@
-# Triage brûlés — plateforme d'orientation en afflux massif
+# BurnFlow 🔥🏥
 
-Triage des brûlés au point médical le plus proche, recensement temps réel des
-capacités hospitalières, routage de proche en proche avec équilibrage de
-charge, avis brûlologue à distance. Objectif clinique : **décharger les
-centres des brûlés** en orientant vers chirurgie et réanimation tout ce qui
-peut l'être selon les critères ISBI.
+**Triage et orientation des brûlés en afflux massif** — carte corporelle
+Lund-Browder, routage de proche en proche avec équilibrage de charge entre
+hôpitaux, télé-avis de brûlologue, notifications push. Pensé pour être
+déployé en quelques heures quand un incendie massif sature les centres
+des brûlés.
 
-- Cahier des charges : [docs/GOAL.md](docs/GOAL.md)
-- Grille clinique de référence (prototype validé) : [docs/triage-brulures-v3.html](docs/triage-brulures-v3.html)
-- Décisions d'implémentation : [docs/DECISIONS.md](docs/DECISIONS.md)
-- Matrice des rôles : [docs/ROLES.md](docs/ROLES.md)
-- Conduite en incident : [docs/RUNBOOK.md](docs/RUNBOOK.md)
-- Scénario de bout en bout joué : [docs/E2E-REPORT.md](docs/E2E-REPORT.md)
+[![Licence](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
+![Next.js 15](https://img.shields.io/badge/Next.js-15-black)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791)
+![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8)
 
-## Stack
+> **English summary** — BurnFlow is an open-source mass-casualty burn triage
+> and patient-routing platform: Lund-Browder body map with ISBI severity
+> criteria, load-balanced hospital cascade routing (refusal/timeout →
+> automatic fallback with bed reservation), national burn-specialist advice
+> queue, web push notifications, full audit trail. French UI, built for the
+> Algerian health system, reusable anywhere. Self-hosted: Next.js 15 +
+> PostgreSQL 16 + optional OSRM routing + optional Anthropic AI assists
+> (bring your own API key — the app is fully functional without it).
 
-Next.js 15 (App Router, TypeScript strict, full-stack) · PostgreSQL 16 +
-Drizzle ORM (migrations versionnées) · auth maison par codes d'accès
-personnels durables — validité choisie, réutilisables, prolongeables,
-révocables (sessions cookie httpOnly ; DECISIONS D-012/D-013) ·
-Nodemailer (SMTP, notifications) ·
-web-push (VAPID) · OSRM self-hosted (secours haversine) · SDK Anthropic
-(`claude-sonnet-4-6`, serveur uniquement, fail-open) · Tailwind 4 ·
-Vitest + Playwright · Docker Compose (app, postgres, osrm, mailpit dev).
+| Triage carte corporelle | Cascade avec bascule automatique | Journal du régulateur |
+|---|---|---|
+| ![Triage](docs/e2e-captures/02-urgentiste-triage-26pct-classe2.png) | ![Cascade](docs/e2e-captures/07-urgentiste-expiration-hopC.png) | ![Journal](docs/e2e-captures/14-regulateur-journal-complet.png) |
 
-## Démarrage en développement
+## Le problème
+
+Lors d'incendies massifs, les centres des brûlés saturent en quelques
+heures, des hôpitaux régionaux sont hors service, et le régulateur n'a
+aucune vue unifiée des lits disponibles. Les patients sont évacués « au
+jugé », parfois vers des services déjà pleins, pendant que des lits
+adaptés restent libres ailleurs.
+
+## La réponse
+
+BurnFlow relie le terrain, les hôpitaux et la régulation en temps réel.
+**Objectif clinique : décharger les centres des brûlés** en orientant vers
+la chirurgie et la réanimation tout ce qui peut l'être selon les critères
+ISBI — et en réservant les centres aux patients qui en relèvent vraiment.
+
+### Quatre rôles, strictement cloisonnés
+
+- **Urgentiste** (point médical de triage) : patient pseudonymisé (ID
+  bracelet uniquement — jamais de nom, téléphone ni photo), carte
+  corporelle face/dos par tranche d'âge Lund-Browder, SCB et Parkland
+  calculés en direct, classe d'orientation (chirurgie / réanimation /
+  centre des brûlés), demande de transfert en un geste, demande d'avis.
+- **Référent hôpital** : capacité en 6 champs (gros boutons ±,
+  « Confirmer inchangé »), demandes reçues avec compte à rebours,
+  accepter (= **lit réservé** transactionnellement) ou refuser avec motif,
+  patients attendus, arrivée.
+- **Régulateur** : tableau de bord national (attentes par classe,
+  occupation et fraîcheur des capacités, carte), cascade de chaque demande
+  avec scores, forçage motivé, gestion des sites (vérification avant
+  activation), des comptes et des codes d'accès, seuils cliniques
+  **versionnés**, rapport de situation 6 h, export CSV du journal d'audit.
+- **Brûlologue consultant** : file nationale « premier qui prend »
+  (verrou exclusif), fiche clinique pseudonymisée, réponse visible
+  immédiatement par l'urgentiste, retour automatique en file après délai.
+
+### Le routage, en une formule
+
+Les hôpitaux candidats (actifs, capacité fraîche < 6 h, lit du bon type)
+sont classés par `score = minutes_de_trajet × (1 + λ·occupation²)` —
+proche mais saturé perd contre plus loin mais disponible. Un hôpital à
+occupation ≥ 85 % passe en fin de cascade. La demande part au premier ;
+refus motivé ou silence (10 min) → bascule automatique au suivant, jusqu'à
+acceptation — qui **décrémente le lit** (deux demandes ne peuvent pas
+obtenir le dernier lit). Cascade épuisée → alerte régulateur. Distances via
+OSRM auto-hébergé, avec estimation haversine de secours si OSRM est
+indisponible. Tous les seuils (λ, saturation, délais, mode « centres
+protégés ») sont réglables par le régulateur, chaque version étant tracée.
+
+### Assistances IA — optionnelles, suggestives, jamais décisionnelles
+
+Trois aides propulsées par l'API Anthropic (`claude-sonnet-4-6`) :
+contrôle de cohérence à la validation du triage, fiche de transfert
+rédigée, synthèse pour l'avis brûlologue. **Chacun apporte sa propre clé**
+(`ANTHROPIC_API_KEY` dans `.env.local`) ; sans clé, tout fonctionne — ces
+aides restent simplement muettes (*fail-open*, y compris en cas de panne
+de l'API). L'agent ne reçoit que le bilan structuré pseudonymisé de la
+tâche en cours — jamais d'identité (il n'y en a pas en base), jamais les
+capacités ni le journal. Prompts lisibles dans
+[`src/lib/agent/prompts/`](src/lib/agent/prompts/).
+
+## Démarrage rapide
 
 Prérequis : Node ≥ 20, pnpm ≥ 9, Docker.
 
 ```bash
-docker compose up -d postgres mailpit   # Postgres sur localhost:5433, Mailpit UI sur :8025
+git clone https://github.com/louniskhodjama-tech/burnflow.git
+cd burnflow
+docker compose up -d postgres mailpit   # Postgres :5433 · Mailpit UI :8025
 pnpm install
-cp .env.example .env.local              # puis compléter (voir tableau ci-dessous)
+cp .env.example .env.local              # compléter (voir tableau ci-dessous)
 pnpm db:migrate
-pnpm seed:demo                          # 10 sites, 4 comptes (1/rôle), capacités, codes d'accès affichés
+pnpm seed:demo                          # 10 sites + 1 compte par rôle + codes d'accès affichés
 pnpm dev                                # http://localhost:3000
 ```
 
-Connexion : par code d'accès personnel uniquement (D-012) — codes imprimés
-par `seed:demo`, ou `pnpm gen:code <email> [n]` pour un compte précis.
-Le régulateur en génère aussi depuis /regulation/utilisateurs. Mailpit
-(http://localhost:8025) ne sert qu'aux emails de notification.
+Connectez-vous avec l'un des codes affichés par `seed:demo`
+(authentification par codes personnels — durables, prolongeables,
+révocables par le régulateur ; `pnpm gen:code <email> [n] [jours]` en
+secours).
 
-### Variables d'environnement (`.env.local`)
+### Configuration (`.env.local`)
 
-| Variable | Rôle | Dev |
+| Variable | Rôle | Obligatoire |
 |---|---|---|
-| `DATABASE_URL` | Postgres | `postgres://triage:triage@localhost:5433/triage` |
-| `APP_URL` | URL publique (liens magiques, emails) | `http://localhost:3000` |
-| `SESSION_SECRET` | ≥ 32 caractères aléatoires | requis |
-| `ANTHROPIC_API_KEY` | agent IA (vide = fonctions IA neutralisées, fail-open) | facultatif |
-| `SMTP_HOST/PORT/USER/PASS/FROM` | envoi d'emails | `localhost:1025` (Mailpit) |
-| `VAPID_PUBLIC_KEY/PRIVATE_KEY/SUBJECT` | push web (`npx web-push generate-vapid-keys`) | requis pour le push |
-| `OSRM_URL` | routage routier (vide = estimation haversine ×1,35 à 70 km/h) | facultatif |
-| `RUN_MIGRATIONS_ON_BOOT` | `1` = migrations au démarrage (utilisé par Docker) | vide en dev |
+| `DATABASE_URL` | PostgreSQL 16 | oui |
+| `APP_URL` | URL publique | oui |
+| `SESSION_SECRET` | ≥ 32 caractères aléatoires | oui |
+| `ANTHROPIC_API_KEY` | **votre** clé API pour les aides IA | non — tout fonctionne sans |
+| `SMTP_*` | emails de notification (dev : Mailpit) | non |
+| `VAPID_*` | notifications push (`npx web-push generate-vapid-keys`) | non |
+| `OSRM_URL` | temps de trajet routiers (sinon : estimation) | non |
 
 ### Tests
 
 ```bash
 pnpm test        # unitaires : scoring clinique, routage, matrice des rôles
-pnpm test:e2e    # scénario complet Playwright (nécessite postgres+mailpit et pnpm seed:e2e)
+pnpm test:e2e    # scénario complet Playwright contre un build de production
 ```
 
-### Scripts
+Le scénario E2E rejoue l'histoire entière : création → triage classe 2 →
+cascade → refus → expiration (vrai job cron) → acceptation avec lit
+réservé → avis pris et répondu → arrivée → journal complet
+([rapport et captures](docs/E2E-REPORT.md)).
 
-| Commande | Effet |
-|---|---|
-| `pnpm seed:demo` | données de démonstration + codes d'accès frais |
-| `pnpm gen:code <email> [n] [jours]` | codes personnels pour un compte, validité en jours (`--list` : comptes) |
-| `pnpm seed:sites data/sites.east-draft.csv` | import CSV de sites (inactifs, à vérifier) |
-| `pnpm seed:e2e` | contexte du scénario Playwright |
-| `pnpm distances:rebuild [--only-estimates]` | recalcul de la table de distances |
-| `bash scripts/osrm-prepare.sh` | télécharge l'extrait Algérie et prépare OSRM |
-| `bash scripts/backup.sh` | sauvegarde Postgres gzippée dans `backups/` (rotation 14 j) |
-
-## OSRM
+### OSRM (optionnel mais recommandé en production)
 
 ```bash
-bash scripts/osrm-prepare.sh        # une fois : télécharge + osrm-extract + osrm-contract
-docker compose up -d osrm           # sert sur :5000
-# .env.local : OSRM_URL=http://localhost:5000
-pnpm distances:rebuild --only-estimates   # remplace les estimations par du vrai routier
+bash scripts/osrm-prepare.sh            # télécharge l'extrait routier et le prépare
+docker compose up -d osrm
+pnpm distances:rebuild --only-estimates # remplace les estimations par du vrai routier
 ```
 
-Sans OSRM, l'application fonctionne : les distances sont estimées (haversine
-×1,35, 70 km/h), marquées « estimé » dans l'interface, et recalculées dès
-qu'OSRM répond.
+Le script utilise l'extrait Algérie de Geofabrik — adaptez l'URL à votre
+région dans `scripts/osrm-prepare.sh`.
 
-## Déploiement Dokploy (production) — pas à pas
+## Application installable (PWA)
 
-> État : **en attente du VPS** (voir docs/DECISIONS.md D-001). La procédure
-> ci-dessous est prête à être exécutée dès que `VPS_IP` est fourni.
+Installable sur ordinateur et mobile (HTTPS requis) : plein écran, icône,
+raccourcis (nouveau patient, capacité, file des avis, régulation) et
+notifications push cliquables qui ouvrent l'écran concerné, même
+téléphone en veille.
 
-1. VPS Ubuntu neuf : installer Dokploy (script officiel) :
-   `curl -sSL https://dokploy.com/install.sh | sh`
-2. Dans Dokploy : créer un projet « triage-brules », service **Compose**
-   pointant sur ce dépôt (`docker-compose.yml` à la racine).
-3. Variables d'environnement du service : recopier `.env.example` complété
-   (`SESSION_SECRET` fort, `APP_URL=https://brules.iqmed.io`, SMTP réel,
-   clés VAPID de production, `ANTHROPIC_API_KEY`). Ne jamais committer ces valeurs.
-4. Domaine : `brules.iqmed.io` → port 3000 du service `app`, certificat
-   Let's Encrypt via Dokploy/Traefik. DNS : enregistrement
-   `A brules.iqmed.io → VPS_IP` (géré chez Hostinger via le connecteur MCP —
-   confirmation avant toute écriture), + SPF/DKIM du fournisseur SMTP.
-5. Volumes persistants : `pgdata` (Postgres) et `./osrm-data` (OSRM) — déclarés
-   dans le compose. Préparer OSRM sur le VPS : `bash scripts/osrm-prepare.sh`.
-6. Les migrations s'appliquent automatiquement au démarrage du conteneur
-   (`RUN_MIGRATIONS_ON_BOOT=1` dans le compose).
-7. Données : `pnpm seed:sites data/sites.east-draft.csv` puis vérification et
-   activation des sites par le régulateur dans l'interface.
-8. Sauvegardes : planifier `bash scripts/backup.sh` (cron hôte ou tâche
-   planifiée Dokploy, quotidienne, 03:00).
-9. Vérifications de bout en bout : DNS résout, HTTPS valide,
-   `https://brules.iqmed.io/api/health` → `ok`, OSRM répond, un lien magique
-   arrive dans une vraie boîte, une notification push arrive sur Android.
+## Déploiement
 
-## Installation PWA (desktop et mobile)
+Un `docker-compose.yml` complet (app + PostgreSQL + OSRM) et un
+`Dockerfile` multi-étages sont fournis ; les migrations s'appliquent au
+démarrage. Guide pas à pas (Dokploy ou tout hôte Docker), sauvegardes
+quotidiennes et conduite d'incident : [docs/RUNBOOK.md](docs/RUNBOOK.md).
+Cahier des charges d'origine : [docs/GOAL.md](docs/GOAL.md) · décisions
+d'architecture : [docs/DECISIONS.md](docs/DECISIONS.md) · matrice des
+rôles testée : [docs/ROLES.md](docs/ROLES.md).
 
-L'application est installable comme une app native (icône, plein écran,
-notifications) — cela exige **HTTPS** (ou `localhost` en dev) :
+## ⚠️ Avertissement médical
 
-- **Chrome / Edge (ordinateur et Android)** : un bandeau « Installer
-  l'application » apparaît après connexion (ou icône d'installation dans la
-  barre d'adresse). Raccourcis intégrés : nouveau patient, capacité, file
-  des avis, régulation.
-- **iPhone / iPad (Safari)** : bouton Partager → « Sur l'écran d'accueil »
-  (un guide s'affiche dans l'app).
-- Icônes régénérables depuis le logo : `node scripts/make-icons.mjs`.
+BurnFlow est un **outil d'aide à la décision et à la coordination**. Il ne
+constitue pas un dispositif médical, ne pose aucun diagnostic et ne
+remplace en aucun cas le jugement clinique. Les seuils livrés par défaut
+(critères ISBI) doivent être **revus et validés par l'autorité médicale de
+chaque déploiement** avant toute utilisation réelle. Aucune donnée
+nominative patient ne doit être saisie dans l'application.
 
-## Sécurité
+## Crédits et licence
 
-Aucune donnée nominative patient (ID bracelet uniquement, rappelé dans l'UI).
-HTTPS obligatoire en production, cookies `Secure`/`httpOnly`, rate-limit sur
-la connexion, `audit_log` sur toute mutation (export CSV pour le régulateur),
-secrets uniquement en variables d'environnement.
+Grille clinique de triage (table Lund-Browder par âge, signes de gravité
+ISBI, classes d'orientation, Parkland) conçue et validée par le
+**Dr Lounis Khodja Mounir Abderrahmane**.
+
+Code sous licence [Apache 2.0](LICENSE) — utilisez, adaptez, déployez,
+avec attribution. Les contributions (issues, PR, retours de terrain,
+traductions) sont bienvenues.

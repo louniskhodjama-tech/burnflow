@@ -36,7 +36,7 @@ export async function sendEmail(opts: {
   }
   try {
     await t.sendMail({
-      from: process.env.SMTP_FROM ?? "Triage brûlés <noreply@iqmed.io>",
+      from: process.env.SMTP_FROM ?? "Triage brûlés <noreply@example.org>",
       to: opts.to,
       subject: opts.subject,
       text: opts.text,

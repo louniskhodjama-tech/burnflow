@@ -16,10 +16,10 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-Triage brûlés <noreply@iqmed.io>}
+      SMTP_FROM: ${SMTP_FROM:-Triage brûlés <noreply@example.org>}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
-      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@iqmed.io}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@example.org}
       OSRM_URL: ${OSRM_URL:-http://osrm:5000}
       RUN_MIGRATIONS_ON_BOOT: "1"
     ports:

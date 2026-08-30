@@ -18,7 +18,7 @@ function ensureVapid(): boolean {
   if (!pub || !priv) return false;
   if (!vapidConfigured) {
     webpush.setVapidDetails(
-      process.env.VAPID_SUBJECT ?? "mailto:admin@iqmed.io",
+      process.env.VAPID_SUBJECT ?? "mailto:admin@example.org",
       pub,
       priv,
     );
