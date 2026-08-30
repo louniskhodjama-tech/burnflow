@@ -45,14 +45,14 @@ Mis à jour à chaque commit de jalon.
 
 | Jalon | Statut |
 |---|---|
-| M0 | à faire |
-| M1 | à faire |
-| M2 | à faire |
-| M3 | à faire |
-| M4 | à faire |
-| M5 | à faire |
-| M6 | à faire |
-| M7 | à faire |
+| M0 | ✅ fait (commit 1aec353) |
+| M1 | ✅ fait (commit 1aec353) — UI codes d'accès en M8 |
+| M2 | ✅ fait (commit c16eac7) — vérifié en navigateur |
+| M3 | ✅ fait — capacité, ± , confirmer inchangé, péremption |
+| M4 | ✅ fait — cascade, refus, expiration cron, acceptation + lit réservé, forçage lib |
+| M5 | ✅ fait — file, prise exclusive, réponse, relâche auto 15 min |
+| M6 | en cours — envoi push/email câblé ; reste SW + abonnement UI |
+| M7 | en cours — 3 capacités écrites ; rapport 6 h déterministe fait |
 | M8 | à faire |
 | M9 | à faire |
 | M10 | à faire |

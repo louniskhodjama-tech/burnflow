@@ -21,6 +21,7 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:admin@iqmed.io}
       OSRM_URL: ${OSRM_URL:-http://osrm:5000}
+      RUN_MIGRATIONS_ON_BOOT: "1"
     ports:
       - "3000:3000"
 
