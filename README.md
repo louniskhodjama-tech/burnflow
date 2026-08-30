@@ -17,7 +17,8 @@ peut l'être selon les critères ISBI.
 
 Next.js 15 (App Router, TypeScript strict, full-stack) · PostgreSQL 16 +
 Drizzle ORM (migrations versionnées) · auth maison par codes d'accès
-personnels à 8 caractères (sessions cookie httpOnly ; voir DECISIONS D-012) ·
+personnels durables — validité choisie, réutilisables, prolongeables,
+révocables (sessions cookie httpOnly ; DECISIONS D-012/D-013) ·
 Nodemailer (SMTP, notifications) ·
 web-push (VAPID) · OSRM self-hosted (secours haversine) · SDK Anthropic
 (`claude-sonnet-4-6`, serveur uniquement, fail-open) · Tailwind 4 ·
@@ -66,7 +67,7 @@ pnpm test:e2e    # scénario complet Playwright (nécessite postgres+mailpit et 
 | Commande | Effet |
 |---|---|
 | `pnpm seed:demo` | données de démonstration + codes d'accès frais |
-| `pnpm gen:code <email> [n]` | codes d'accès personnels pour un compte (`--list` : comptes) |
+| `pnpm gen:code <email> [n] [jours]` | codes personnels pour un compte, validité en jours (`--list` : comptes) |
 | `pnpm seed:sites data/sites.east-draft.csv` | import CSV de sites (inactifs, à vérifier) |
 | `pnpm seed:e2e` | contexte du scénario Playwright |
 | `pnpm distances:rebuild [--only-estimates]` | recalcul de la table de distances |

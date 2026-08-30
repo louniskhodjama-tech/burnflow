@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import {
   accessCodes,
@@ -200,12 +200,17 @@ export async function setUserActiveAction(
   return { ok: true };
 }
 
-/** Génère un code d'accès (affiché UNE fois, stocké haché). */
+/** Durées de validité proposées pour un code (heures). */
+export const CODE_DURATIONS_H = [24, 72, 168, 720] as const; // 24 h · 3 j · 7 j · 30 j
+
+/** Génère un code personnel (affiché UNE fois, stocké haché, réutilisable — D-013). */
 export async function generateCodeAction(
   userId: string,
-): Promise<{ ok: boolean; error?: string; code?: string }> {
+  hours: number,
+): Promise<{ ok: boolean; error?: string; code?: string; expiresAt?: string }> {
   const actor = await requireActor("regulateur");
   if (!can.generateAccessCodes(actor)) return { ok: false, error: "Accès refusé." };
+  const h = Math.min(Math.max(Math.round(hours) || 24, 1), 720);
 
   const target = (
     await db.select().from(users).where(eq(users.id, userId)).limit(1)
@@ -214,11 +219,12 @@ export async function generateCodeAction(
     return { ok: false, error: "Utilisateur introuvable ou désactivé." };
 
   const code = generateAccessCode();
+  const expiresAt = new Date(Date.now() + h * 3600 * 1000);
   await db.insert(accessCodes).values({
     codeHash: sha256(code),
     userId,
     createdBy: actor.userId,
-    expiresAt: new Date(Date.now() + 24 * 3600 * 1000),
+    expiresAt,
   });
   await audit({
     userId: actor.userId,
@@ -226,9 +232,73 @@ export async function generateCodeAction(
     action: "access_code.generate",
     entityType: "user",
     entityId: userId,
+    after: { validiteHeures: h },
     ip: await clientIp(),
   });
-  return { ok: true, code: `${code.slice(0, 4)}-${code.slice(4)}` };
+  return {
+    ok: true,
+    code: `${code.slice(0, 4)}-${code.slice(4)}`,
+    expiresAt: expiresAt.toISOString(),
+  };
+}
+
+/** Prolonge un code actif (depuis maintenant ou son échéance, la plus tardive). */
+export async function extendCodeAction(
+  codeId: string,
+  hours: number,
+): Promise<{ ok: boolean; error?: string; expiresAt?: string }> {
+  const actor = await requireActor("regulateur");
+  if (!can.generateAccessCodes(actor)) return { ok: false, error: "Accès refusé." };
+  const h = Math.min(Math.max(Math.round(hours) || 24, 1), 720);
+
+  const row = (
+    await db.select().from(accessCodes).where(eq(accessCodes.id, codeId)).limit(1)
+  )[0];
+  if (!row || row.revokedAt) return { ok: false, error: "Code introuvable ou révoqué." };
+
+  const base = Math.max(Date.now(), new Date(row.expiresAt).getTime());
+  const expiresAt = new Date(base + h * 3600 * 1000);
+  await db
+    .update(accessCodes)
+    .set({ expiresAt })
+    .where(eq(accessCodes.id, codeId));
+  await audit({
+    userId: actor.userId,
+    role: actor.role,
+    action: "access_code.extend",
+    entityType: "access_code",
+    entityId: codeId,
+    after: { prolongationHeures: h, expireLe: expiresAt.toISOString() },
+    ip: await clientIp(),
+  });
+  revalidatePath("/regulation/utilisateurs");
+  return { ok: true, expiresAt: expiresAt.toISOString() };
+}
+
+/** Révoque immédiatement un code (les sessions déjà ouvertes ne sont pas touchées). */
+export async function revokeCodeAction(
+  codeId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const actor = await requireActor("regulateur");
+  if (!can.generateAccessCodes(actor)) return { ok: false, error: "Accès refusé." };
+
+  const updated = await db
+    .update(accessCodes)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(accessCodes.id, codeId), isNull(accessCodes.revokedAt)))
+    .returning({ id: accessCodes.id });
+  if (updated.length === 0) return { ok: false, error: "Code introuvable ou déjà révoqué." };
+
+  await audit({
+    userId: actor.userId,
+    role: actor.role,
+    action: "access_code.revoke",
+    entityType: "access_code",
+    entityId: codeId,
+    ip: await clientIp(),
+  });
+  revalidatePath("/regulation/utilisateurs");
+  return { ok: true };
 }
 
 /* ============================ Seuils (rules_config) ============================ */

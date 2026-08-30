@@ -31,8 +31,9 @@ export default async function LoginPage({
       <section className="card my-2">
         <h2 className="card-title">Code d&apos;accès</h2>
         <p className="mb-2 text-xs text-muted">
-          Code à 8 caractères transmis par le régulateur (usage unique,
-          valable 24 h). Votre session reste ensuite ouverte sur cet appareil.
+          Code personnel à 8 caractères transmis par le régulateur.
+          Réutilisable sur vos appareils jusqu&apos;à sa date d&apos;expiration ;
+          votre session reste ensuite ouverte sur cet appareil.
         </p>
         <form action={loginWithCode} className="flex flex-col gap-2">
           <label className="field-label" htmlFor="code">

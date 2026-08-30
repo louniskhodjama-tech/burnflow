@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { accessCodes, users } from "@/db/schema";
 import { clientIp, createSession, homeForRole } from "@/lib/auth";
@@ -11,8 +11,10 @@ import { audit } from "@/lib/audit";
 import type { Role } from "@/lib/policy";
 
 /**
- * Authentification par code d'accès uniquement (décision utilisateur,
- * DECISIONS D-012) : le lien magique par email a été retiré.
+ * Authentification par code d'accès uniquement (D-012). Le code est un
+ * identifiant PERSONNEL durable (D-013) : réutilisable jusqu'à expiration
+ * (durée fixée par le régulateur) ou révocation, chaque connexion étant
+ * tracée nominativement au journal d'audit.
  */
 export async function loginWithCode(formData: FormData): Promise<void> {
   const code = normalizeAccessCode(String(formData.get("code") ?? ""));
@@ -35,7 +37,7 @@ export async function loginWithCode(formData: FormData): Promise<void> {
       .where(
         and(
           eq(accessCodes.codeHash, sha256(code)),
-          isNull(accessCodes.usedAt),
+          isNull(accessCodes.revokedAt),
           gt(accessCodes.expiresAt, now),
         ),
       )
@@ -44,13 +46,15 @@ export async function loginWithCode(formData: FormData): Promise<void> {
 
   if (!row || !row.active) redirect("/login?error=code");
 
-  // Usage unique : marqué utilisé de façon atomique (perdant si déjà pris).
-  const updated = await db
+  // Marqueurs d'utilisation (le code reste valable jusqu'à expiration/révocation).
+  await db
     .update(accessCodes)
-    .set({ usedAt: now })
-    .where(and(eq(accessCodes.id, row.id), isNull(accessCodes.usedAt)))
-    .returning({ id: accessCodes.id });
-  if (updated.length === 0) redirect("/login?error=code");
+    .set({
+      usedAt: sql`coalesce(${accessCodes.usedAt}, ${now})`,
+      lastUsedAt: now,
+      useCount: sql`${accessCodes.useCount} + 1`,
+    })
+    .where(eq(accessCodes.id, row.id));
 
   await createSession(row.userId);
   await audit({

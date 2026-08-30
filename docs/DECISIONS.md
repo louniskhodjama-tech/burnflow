@@ -5,7 +5,7 @@ Le VPS n'existe pas encore. Tout se construit et se vérifie en local (Docker : 
 osrm). Le jalon M11 (Dokploy, DNS Hostinger, SPF/DKIM, HTTPS) sera exécuté quand l'utilisateur
 fournira `VPS_IP` et les accès. Rien d'autre n'est bloqué par ce report.
 
-## D-002 — Codes d'accès : usage unique, validité 24 h
+## D-002 — Codes d'accès : usage unique, validité 24 h *(remplacé par D-013)*
 Le GOAL impose « code à 8 caractères transmis oralement » sans préciser durée ni réutilisation.
 Choix : usage unique, expiration 24 h, alphabet sans ambiguïté orale (A-Z sans I/O, 2-9).
 Le régulateur peut en générer autant que nécessaire. Stockage haché (SHA-256), jamais en clair.
@@ -79,3 +79,18 @@ Anti-verrouillage (les codes étant la seule porte) : `pnpm gen:code <email> [n]
 génère des codes depuis le serveur (documenté au RUNBOOK) ; `pnpm seed:demo`
 en régénère pour les comptes de démonstration. Les emails restent utilisés
 pour les NOTIFICATIONS (pas pour l'auth).
+
+## D-013 — Codes personnels durables : réutilisables, validité choisie, prolongeables, révocables (décision utilisateur, 2026-08-30)
+Remplace l'usage unique/24 h de D-002 : l'utilisateur veut pouvoir « prolonger
+l'utilisation du code au-delà de 24 h ». Le code devient l'identifiant
+personnel durable de son détenteur :
+- **validité choisie** à la génération : 24 h, 3 j, 7 j ou 30 j (défaut 7 j
+  pour `seed:demo` et `gen:code`) ;
+- **réutilisable** pendant sa validité (plusieurs appareils, reconnexions) —
+  `used_at` (première utilisation), `last_used_at` et `use_count` sont tracés ;
+- **prolongeable** (`access_code.extend` audité) et **révocable** immédiatement
+  (`access_code.revoke` audité) par le régulateur, qui voit les codes actifs
+  de chaque compte (création, échéance, nombre de connexions, dernière) ;
+- contrepartie sécurité de l'abandon de l'usage unique : révocation en un
+  clic, visibilité des utilisations, chaque connexion auditée nominativement,
+  rate-limit inchangé. Migration `0001_codes-durables`.

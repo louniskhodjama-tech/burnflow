@@ -10,8 +10,9 @@ import { generateAccessCode, sha256 } from "../src/lib/crypto";
  * ce script évite tout verrouillage (ex. plus aucun régulateur connecté).
  *
  * Usage :
- *   pnpm gen:code <email> [n]     # n codes (défaut 1), 24 h, usage unique
- *   pnpm gen:code --list          # liste les comptes actifs
+ *   pnpm gen:code <email> [n] [jours]  # n codes (défaut 1), validité en jours (défaut 7)
+ *   pnpm gen:code --list               # liste les comptes actifs
+ * Les codes sont personnels et réutilisables jusqu'à expiration (D-013).
  */
 async function main() {
   const arg = process.argv[2];
@@ -31,6 +32,7 @@ async function main() {
   }
 
   const count = Math.min(Math.max(Number(process.argv[3] ?? 1) || 1, 1), 20);
+  const days = Math.min(Math.max(Number(process.argv[4] ?? 7) || 7, 1), 30);
   const user = (
     await db.select().from(users).where(eq(users.email, arg.toLowerCase())).limit(1)
   )[0];
@@ -43,14 +45,14 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Codes pour ${user.displayName} (${user.role}) — 24 h, usage unique :`);
+  console.log(`Codes pour ${user.displayName} (${user.role}) — ${days} jour(s), réutilisables :`);
   for (let i = 0; i < count; i++) {
     const code = generateAccessCode();
     await db.insert(accessCodes).values({
       codeHash: sha256(code),
       userId: user.id,
       createdBy: user.id,
-      expiresAt: new Date(Date.now() + 24 * 3600 * 1000),
+      expiresAt: new Date(Date.now() + days * 24 * 3600 * 1000),
     });
     console.log(`  ${code.slice(0, 4)}-${code.slice(4)}`);
   }

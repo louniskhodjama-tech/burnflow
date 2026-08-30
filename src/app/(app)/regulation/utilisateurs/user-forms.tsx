@@ -4,9 +4,27 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   createUserAction,
+  extendCodeAction,
   generateCodeAction,
+  revokeCodeAction,
   setUserActiveAction,
 } from "../actions";
+
+const DUREES: { h: number; label: string }[] = [
+  { h: 24, label: "24 h" },
+  { h: 72, label: "3 jours" },
+  { h: 168, label: "7 jours" },
+  { h: 720, label: "30 jours" },
+];
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleString("fr-DZ", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 const ROLE_LABELS: Record<string, string> = {
   urgentiste: "Urgentiste",
@@ -27,10 +45,18 @@ export function UserRow({
     active: boolean;
     siteNames: string[];
     lastLoginAt: string | null;
+    codes: {
+      id: string;
+      createdAt: string;
+      expiresAt: string;
+      lastUsedAt: string | null;
+      useCount: number;
+    }[];
   };
 }) {
   const router = useRouter();
-  const [code, setCode] = useState<string | null>(null);
+  const [code, setCode] = useState<{ value: string; expiresAt: string } | null>(null);
+  const [duree, setDuree] = useState(168);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -54,14 +80,28 @@ export function UserRow({
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
+          <select
+            className="min-h-9 rounded-md border border-line bg-white px-1 text-[13px]"
+            value={duree}
+            disabled={pending || !user.active}
+            onChange={(e) => setDuree(Number(e.target.value))}
+            aria-label="Durée de validité du code"
+          >
+            {DUREES.map((d) => (
+              <option key={d.h} value={d.h}>
+                {d.label}
+              </option>
+            ))}
+          </select>
           <button
             className="btn-base min-h-9 px-2 text-[13px]"
             disabled={pending || !user.active}
             onClick={() =>
               startTransition(async () => {
                 setError(null);
-                const res = await generateCodeAction(user.id);
-                if (res.ok && res.code) setCode(res.code);
+                const res = await generateCodeAction(user.id, duree);
+                if (res.ok && res.code && res.expiresAt)
+                  setCode({ value: res.code, expiresAt: res.expiresAt });
                 else setError(res.error ?? "Erreur.");
               })
             }
@@ -87,15 +127,63 @@ export function UserRow({
       {code && (
         <div className="mt-2 rounded-lg border border-chir bg-chir/5 p-2">
           <p className="text-[13px]">
-            Code <b>personnel</b> de <b>{user.displayName}</b> (24 h, usage
-            unique) — à transmettre oralement à cette personne uniquement.
-            Toute action faite avec ce code sera tracée à son nom. Il ne sera
-            plus affiché :
+            Code <b>personnel</b> de <b>{user.displayName}</b> — valable
+            jusqu&apos;au <b>{fmtDate(code.expiresAt)}</b>, réutilisable sur ses
+            appareils, révocable à tout moment. À transmettre oralement à cette
+            personne uniquement : toute action faite avec ce code est tracée à
+            son nom. Il ne sera plus affiché :
           </p>
           <p className="mt-1 text-center font-mono text-2xl font-bold tracking-[0.2em]">
-            {code}
+            {code.value}
           </p>
         </div>
+      )}
+      {user.codes.length > 0 && (
+        <ul className="mt-2 flex flex-col gap-1">
+          {user.codes.map((ac) => (
+            <li
+              key={ac.id}
+              className="flex flex-wrap items-center justify-between gap-1 rounded-md bg-bg px-2 py-1 text-xs"
+            >
+              <span>
+                Code du {fmtDate(ac.createdAt)} · expire {fmtDate(ac.expiresAt)} ·{" "}
+                {ac.useCount > 0
+                  ? `${ac.useCount} connexion${ac.useCount > 1 ? "s" : ""}${ac.lastUsedAt ? `, dernière ${fmtDate(ac.lastUsedAt)}` : ""}`
+                  : "jamais utilisé"}
+              </span>
+              <span className="flex gap-1">
+                <button
+                  className="min-h-0 rounded border border-line bg-white px-1.5 py-0.5"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(async () => {
+                      setError(null);
+                      const res = await extendCodeAction(ac.id, 168);
+                      if (res.ok) router.refresh();
+                      else setError(res.error ?? "Erreur.");
+                    })
+                  }
+                >
+                  Prolonger +7 j
+                </button>
+                <button
+                  className="min-h-0 rounded border border-line bg-white px-1.5 py-0.5 text-centre"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(async () => {
+                      setError(null);
+                      const res = await revokeCodeAction(ac.id);
+                      if (res.ok) router.refresh();
+                      else setError(res.error ?? "Erreur.");
+                    })
+                  }
+                >
+                  Révoquer
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
       {error && <p className="mt-1 text-xs text-centre">{error}</p>}
     </li>

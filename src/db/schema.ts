@@ -182,7 +182,11 @@ export const accessCodes = pgTable(
       .notNull()
       .references(() => users.id),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    /** Première utilisation (information) — le code reste réutilisable (D-013). */
     usedAt: timestamp("used_at", { withTimezone: true }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    useCount: integer("use_count").notNull().default(0),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

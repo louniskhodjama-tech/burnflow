@@ -139,8 +139,8 @@ async function main() {
   }
   console.log("capacités initiales enregistrées");
 
-  // Codes d'accès frais (un par utilisateur, 24 h, usage unique)
-  console.log("\nCodes d'accès (24 h, usage unique) :");
+  // Codes d'accès frais (un par utilisateur, 7 jours, réutilisables — D-013)
+  console.log("\nCodes d'accès (7 jours, réutilisables) :");
   const regulateurId = userIds.get("regulateur@demo.local")!;
   for (const u of USERS) {
     const code = generateAccessCode();
@@ -148,7 +148,7 @@ async function main() {
       codeHash: sha256(code),
       userId: userIds.get(u.email)!,
       createdBy: regulateurId,
-      expiresAt: new Date(Date.now() + 24 * 3600 * 1000),
+      expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000),
     });
     console.log(`  ${u.role.padEnd(12)} ${u.email.padEnd(28)} → ${code.slice(0, 4)}-${code.slice(4)}`);
   }

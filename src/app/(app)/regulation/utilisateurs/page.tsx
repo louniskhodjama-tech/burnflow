@@ -1,6 +1,6 @@
-import { asc, eq, inArray, max } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, max } from "drizzle-orm";
 import { db } from "@/db";
-import { auditLog, memberships, sites, users } from "@/db/schema";
+import { accessCodes, auditLog, memberships, sites, users } from "@/db/schema";
 import { requireActor } from "@/lib/auth";
 import { NewUserForm, UserRow } from "./user-forms";
 
@@ -30,6 +30,26 @@ export default async function UsersPage() {
     .where(inArray(auditLog.action, ["login.code", "login.magic_link"]))
     .groupBy(auditLog.userId);
   const lastByUser = new Map(lastLogins.map((l) => [l.userId, l.lastAt]));
+
+  // Codes actifs (non révoqués, non expirés) par compte
+  const activeCodes = await db
+    .select({
+      id: accessCodes.id,
+      userId: accessCodes.userId,
+      expiresAt: accessCodes.expiresAt,
+      createdAt: accessCodes.createdAt,
+      lastUsedAt: accessCodes.lastUsedAt,
+      useCount: accessCodes.useCount,
+    })
+    .from(accessCodes)
+    .where(and(isNull(accessCodes.revokedAt), gt(accessCodes.expiresAt, new Date())))
+    .orderBy(asc(accessCodes.expiresAt));
+  const codesByUser = new Map<string, typeof activeCodes>();
+  for (const ac of activeCodes) {
+    const list = codesByUser.get(ac.userId) ?? [];
+    list.push(ac);
+    codesByUser.set(ac.userId, list);
+  }
 
   const allSites = await db
     .select({ id: sites.id, name: sites.name, kind: sites.kind })
@@ -68,6 +88,13 @@ export default async function UsersPage() {
                 active: u.active,
                 siteNames: sitesByUser.get(u.id) ?? [],
                 lastLoginAt: lastByUser.get(u.id)?.toISOString() ?? null,
+                codes: (codesByUser.get(u.id) ?? []).map((ac) => ({
+                  id: ac.id,
+                  createdAt: ac.createdAt.toISOString(),
+                  expiresAt: ac.expiresAt.toISOString(),
+                  lastUsedAt: ac.lastUsedAt?.toISOString() ?? null,
+                  useCount: ac.useCount,
+                })),
               }}
             />
           ))}

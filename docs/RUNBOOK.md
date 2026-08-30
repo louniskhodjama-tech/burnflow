@@ -87,10 +87,15 @@ Bouton « Confirmer inchangé » suffit à rafraîchir l'horodatage.
 
 ## 6 · Codes d'accès / connexion (seule voie d'authentification)
 
-- Le code est **personnel** : généré pour UN compte, il ouvre la session de ce
-  compte et toutes les actions sont tracées à ce nom. Ne jamais le partager.
-- Code invalide = déjà utilisé (usage unique), expiré (24 h) ou mal saisi.
-  → en générer un nouveau : /regulation/utilisateurs → « Code ».
+- Le code est **personnel et durable** (D-013) : généré pour UN compte avec une
+  validité choisie (24 h à 30 j), réutilisable sur les appareils de son
+  détenteur, et toutes les actions sont tracées à ce nom. Ne jamais le partager.
+- Code invalide = expiré, révoqué ou mal saisi.
+  → générer/prolonger : /regulation/utilisateurs (chaque compte affiche ses
+  codes actifs, avec « Prolonger +7 j » et « Révoquer »).
+- **Code compromis** (entendu par un tiers, appareil perdu) : « Révoquer »
+  immédiatement, puis générer un nouveau code. Les sessions déjà ouvertes se
+  ferment via la désactivation du compte si nécessaire.
 - Trop de tentatives → rate-limit 15 min. Attendre ou changer de réseau.
 - **Plus aucun régulateur ne peut se connecter** (verrouillage) : sur le
   serveur, `pnpm gen:code <email-du-régulateur>` génère un code de secours ;
