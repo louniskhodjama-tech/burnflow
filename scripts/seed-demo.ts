@@ -37,7 +37,7 @@ const SITES: SiteSeed[] = [
   { kind: "hospital", name: "CHU Constantine Benbadis", wilaya: "Constantine", lat: 36.3543, lng: 6.6147, phone: "031 64 77 77" },
   { kind: "hospital", name: "CHU Sétif Saâdna Abdenour", wilaya: "Sétif", lat: 36.1932, lng: 5.4064, phone: "036 84 88 88" },
   { kind: "hospital", name: "CHU Annaba Ibn Rochd", wilaya: "Annaba", lat: 36.8983, lng: 7.7549, phone: "038 86 99 99" },
-  { kind: "burn_center", name: "Centre des brûlés de Douéra (Alger)", wilaya: "Alger", lat: 36.6702, lng: 2.9442, phone: "023 91 00 00" },
+  { kind: "burn_center", name: "Centre des brûlés de Zéralda (Alger)", wilaya: "Alger", lat: 36.705, lng: 2.848, phone: "023 91 00 00" },
 ];
 
 const USERS = [
@@ -55,7 +55,7 @@ const CAPACITIES: Record<string, { icu: number; ward: number; or: boolean; surge
   "CHU Constantine Benbadis": { icu: 4, ward: 15, or: true, surgeon: true, supplies: true, totalIcu: 12, totalWard: 80 },
   "CHU Sétif Saâdna Abdenour": { icu: 3, ward: 10, or: true, surgeon: false, supplies: true, totalIcu: 8, totalWard: 50 },
   "CHU Annaba Ibn Rochd": { icu: 2, ward: 9, or: true, surgeon: true, supplies: false, totalIcu: 10, totalWard: 55 },
-  "Centre des brûlés de Douéra (Alger)": { icu: 1, ward: 2, or: true, surgeon: true, supplies: true, totalIcu: 8, totalWard: 20 },
+  "Centre des brûlés de Zéralda (Alger)": { icu: 1, ward: 2, or: true, surgeon: true, supplies: true, totalIcu: 8, totalWard: 20 },
 };
 
 async function main() {

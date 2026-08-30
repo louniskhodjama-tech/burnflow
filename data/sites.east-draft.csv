@@ -2,7 +2,7 @@ kind;name;wilaya;lat;lng;phone;to_verify
 # BROUILLON — hôpitaux publics de l'Est + centres des brûlés.
 # Coordonnées APPROXIMATIVES, à VÉRIFIER par le régulateur avant activation
 # (GOAL §Données hôpitaux : ne jamais activer un site non vérifié).
-burn_center;Centre des brûlés de Douéra (CHU Douéra);Alger;36.6702;2.9442;;true
+burn_center;Centre des brûlés de Zéralda (CHU Zéralda);Alger;36.7050;2.8480;;true
 burn_center;Centre des brûlés d'Oran (EHU Oran);Oran;35.7010;-0.6580;;true
 hospital;EPH Jijel Mohamed Seddik Benyahia;Jijel;36.8145;5.7532;;true
 hospital;EPH Taher (Jijel);Jijel;36.7680;5.8940;;true
