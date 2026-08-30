@@ -1,0 +1,30 @@
+kind;name;wilaya;lat;lng;phone;to_verify
+# BROUILLON — hôpitaux publics de l'Est + centres des brûlés.
+# Coordonnées APPROXIMATIVES, à VÉRIFIER par le régulateur avant activation
+# (GOAL §Données hôpitaux : ne jamais activer un site non vérifié).
+burn_center;Centre des brûlés de Douéra (CHU Douéra);Alger;36.6702;2.9442;;true
+burn_center;Centre des brûlés d'Oran (EHU Oran);Oran;35.7010;-0.6580;;true
+hospital;EPH Jijel Mohamed Seddik Benyahia;Jijel;36.8145;5.7532;;true
+hospital;EPH Taher (Jijel);Jijel;36.7680;5.8940;;true
+hospital;EPH El Milia (Jijel);Jijel;36.7500;6.2650;;true
+hospital;CHU Béjaïa Khellil Amrane;Béjaïa;36.7423;5.0721;;true
+hospital;EPH Akbou (Béjaïa);Béjaïa;36.4600;4.5350;;true
+hospital;EPH Amizour (Béjaïa);Béjaïa;36.6400;4.9000;;true
+hospital;EPH Skikda;Skikda;36.8697;6.9068;;true
+hospital;EPH Collo (Skikda);Skikda;37.0060;6.5590;;true
+hospital;EPH Azzaba (Skikda);Skikda;36.7360;7.1050;;true
+hospital;CHU Sétif Saâdna Mohamed Abdenour;Sétif;36.1932;5.4064;;true
+hospital;EPH El Eulma (Sétif);Sétif;36.1530;5.6900;;true
+hospital;CHU Constantine Benbadis;Constantine;36.3543;6.6147;;true
+hospital;EHS Daksi Constantine;Constantine;36.3720;6.6280;;true
+hospital;EPH Mila Frères Meghlaoui;Mila;36.4500;6.2640;;true
+hospital;EPH Ferdjioua (Mila);Mila;36.4050;5.9500;;true
+hospital;CHU Annaba Ibn Rochd;Annaba;36.8983;7.7549;;true
+hospital;EPH El Hadjar (Annaba);Annaba;36.8030;7.7360;;true
+hospital;EPH Guelma Hakim Okbi;Guelma;36.4610;7.4280;;true
+hospital;EPH El Tarf;El Tarf;36.7670;8.3140;;true
+hospital;EPH El Kala (El Tarf);El Tarf;36.8960;8.4430;;true
+hospital;CHU Tizi Ouzou Nedir Mohamed;Tizi Ouzou;36.7120;4.0500;;true
+hospital;EPH Azazga (Tizi Ouzou);Tizi Ouzou;36.7440;4.3720;;true
+hospital;EPH Bouira Mohamed Boudiaf;Bouira;36.3740;3.9020;;true
+hospital;EPH Lakhdaria (Bouira);Bouira;36.5640;3.5930;;true

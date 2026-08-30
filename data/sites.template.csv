@@ -1,0 +1,11 @@
+kind;name;wilaya;lat;lng;phone;to_verify
+# Colonnes :
+#   kind      : triage_point | hospital | burn_center
+#   name      : nom complet et unique du site (utilisé comme clé d'import)
+#   wilaya    : wilaya (texte libre)
+#   lat, lng  : coordonnées décimales WGS84 (point : 36.75, pas de virgule décimale)
+#   phone     : téléphone du service (facultatif)
+#   to_verify : true | false — true = doit être vérifié par le régulateur avant activation
+# Les lignes commençant par # sont ignorées. Séparateur : point-virgule.
+# Exemple :
+# hospital;EPH Exemple Ville;Exemple;36.7500;5.0600;034 00 00 00;true

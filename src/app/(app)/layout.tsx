@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireActor } from "@/lib/auth";
 import { RoleNav } from "@/components/nav";
+import { PushManager } from "@/components/push-manager";
 
 const ROLE_LABELS: Record<string, string> = {
   urgentiste: "Urgentiste",
@@ -37,6 +38,7 @@ export default async function AppLayout({
           </div>
         </div>
       </header>
+      <PushManager vapidKey={process.env.VAPID_PUBLIC_KEY ?? null} />
       <main className="mx-auto max-w-2xl px-3 pt-2">{children}</main>
       <RoleNav role={actor.role} />
     </div>
