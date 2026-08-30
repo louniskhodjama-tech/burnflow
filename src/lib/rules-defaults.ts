@@ -51,19 +51,19 @@ export const DEFAULT_PROTOCOLS: ProtocolSection[] = [
     title: "Antibiothérapie & tétanos",
     classes: [1, 2, 3],
     content:
-      "PAS d'antibioprophylaxie systématique de la brûlure (recommandations " +
-      "ISBI/ABA) : elle n'apporte pas de bénéfice précoce et sélectionne des " +
-      "résistances. Antibiothérapie uniquement sur indication : infection " +
-      "documentée ou fortement suspectée (fièvre + signes locaux), plaie " +
-      "particulièrement souillée, indication chirurgicale — après avis " +
-      "brûlologue si possible (bouton « Demander un avis »). Ne pas retarder " +
-      "le transfert pour une antibiothérapie non urgente. TÉTANOS : vérifier " +
-      "et mettre à jour systématiquement le statut vaccinal (SAT/VAT) — la " +
-      "brûlure est une plaie à risque tétanigène.",
+      "Antibiothérapie SYSTÉMATIQUE à large spectre et à forte dose, débutée " +
+      "dès la prise en charge, conformément au protocole en vigueur en " +
+      "Algérie (validé par le Dr Lounis Khodja M. A.). Noter produit, dose et " +
+      "heure d'administration — repris dans la fiche de transfert pour " +
+      "l'hôpital d'accueil, qui adaptera secondairement aux prélèvements et à " +
+      "l'évolution. Ne pas retarder le transfert pour compléter une " +
+      "administration. TÉTANOS : vérifier et mettre à jour systématiquement " +
+      "le statut vaccinal (SAT/VAT) — la brûlure est une plaie à risque " +
+      "tétanigène.",
     items: [
+      "Antibiothérapie large spectre débutée — produit, dose et heure notés",
       "Statut antitétanique vérifié",
       "SAT/VAT administré si nécessaire",
-      "Antibiothérapie débutée UNIQUEMENT si indication (motif noté)",
     ],
   },
   {

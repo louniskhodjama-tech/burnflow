@@ -23,7 +23,8 @@ describe("conduite à tenir — filtrage par classe", () => {
 
   it("contenu par défaut : garde-fous cliniques présents", () => {
     const atb = DEFAULT_PROTOCOLS.find((s) => s.id === "atb-tetanos")!;
-    expect(atb.content).toContain("PAS d'antibioprophylaxie systématique");
+    expect(atb.content).toContain("large spectre");
+    expect(atb.content).toContain("SAT/VAT");
     const pans = DEFAULT_PROTOCOLS.find((s) => s.id === "pansements")!;
     expect(pans.content).toContain("JAMAIS");
     expect(pans.items.length).toBeGreaterThanOrEqual(4);

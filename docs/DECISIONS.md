@@ -101,10 +101,13 @@ analgésie, antibiothérapie & tétanos, pansements détaillés, vigilance
 transfert) affichées à l'urgentiste selon la classe du patient, reprises dans
 la fiche de transfert et visibles de l'hôpital d'accueil.
 - Le CONTENU vit dans `rules_config.protocols` (versionné, éditable par le
-  régulateur dans l'écran Seuils) — les textes livrés par défaut suivent les
-  principes ISBI/EMSB (dont : PAS d'antibioprophylaxie systématique, SAT/VAT
-  systématique, jamais de glace, film plastique à plat, réchauffement actif)
-  et sont soumis à validation de l'autorité médicale de chaque déploiement.
+  régulateur dans l'écran Seuils). Textes par défaut validés le 2026-08-30
+  par le Dr Lounis Khodja M. A., avec une adaptation à la pratique algérienne :
+  antibiothérapie SYSTÉMATIQUE à large spectre à forte dose (par dérogation
+  assumée à la position ISBI/ABA « pas d'antibioprophylaxie systématique »,
+  proposée initialement et écartée par l'autorité médicale). Autres invariants
+  conservés : SAT/VAT systématique, jamais de glace, film plastique à plat,
+  réchauffement actif. Chaque déploiement reste libre d'éditer ses protocoles.
 - Chaque section porte des « gestes cochables » ; chaque coche est un
   enregistrement nominatif horodaté (table `care_actions`, migration 0002),
   audité, repris dans la fiche de transfert imprimable et dans le détail de
