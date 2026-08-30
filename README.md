@@ -6,6 +6,7 @@ hôpitaux, télé-avis de brûlologue, notifications push. Pensé pour être
 déployé en quelques heures quand un incendie massif sature les centres
 des brûlés.
 
+[![CI](https://github.com/louniskhodjama-tech/burnflow/actions/workflows/ci.yml/badge.svg)](https://github.com/louniskhodjama-tech/burnflow/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 ![Next.js 15](https://img.shields.io/badge/Next.js-15-black)
 ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-336791)
@@ -173,4 +174,5 @@ ISBI, classes d'orientation, Parkland) conçue et validée par le
 
 Code sous licence [Apache 2.0](LICENSE) — utilisez, adaptez, déployez,
 avec attribution. Les contributions (issues, PR, retours de terrain,
-traductions) sont bienvenues.
+traductions) sont bienvenues : voir [CONTRIBUTING.md](CONTRIBUTING.md) ·
+vulnérabilités : [SECURITY.md](SECURITY.md).
