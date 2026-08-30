@@ -151,7 +151,10 @@ téléphone en veille.
 
 Un `docker-compose.yml` complet (app + PostgreSQL + OSRM) et un
 `Dockerfile` multi-étages sont fournis ; les migrations s'appliquent au
-démarrage. Guide pas à pas (Dokploy ou tout hôte Docker), sauvegardes
+démarrage. Fonctionne aussi sur les plateformes d'hébergement d'applications
+(PaaS) avec PostgreSQL managé. Amorçage d'une base de production vide
+(migrations + premier régulateur admin + son code d'accès) :
+`DATABASE_URL=<prod> pnpm tsx scripts/bootstrap-prod.ts <email> <nom>`. Guide pas à pas (Dokploy ou tout hôte Docker), sauvegardes
 quotidiennes et conduite d'incident : [docs/RUNBOOK.md](docs/RUNBOOK.md).
 Cahier des charges d'origine : [docs/GOAL.md](docs/GOAL.md) · décisions
 d'architecture : [docs/DECISIONS.md](docs/DECISIONS.md) · matrice des

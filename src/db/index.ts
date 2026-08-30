@@ -6,23 +6,33 @@ declare global {
   var __dbPool: Pool | undefined;
 }
 
-const connectionString =
-  process.env.DATABASE_URL ?? "postgres://triage:triage@localhost:5433/triage";
+// Les Postgres managés fournissent souvent sslmode=require au sens libpq
+// (chiffré, SANS vérification de CA) ; node-pg, lui, vérifie strictement et le
+// paramètre d'URL prime sur la config. On retire donc sslmode de l'URL et on
+// impose l'équivalent libpq via l'option ssl.
+function poolConfig(raw: string) {
+  let connectionString = raw;
+  let ssl: { rejectUnauthorized: boolean } | undefined;
+  const m = /[?&]sslmode=(require|no-verify|prefer)/.exec(raw);
+  if (m) {
+    ssl = { rejectUnauthorized: false };
+    const url = new URL(raw);
+    url.searchParams.delete("sslmode");
+    connectionString = url.toString();
+  }
+  return { connectionString, ssl };
+}
 
 // Pool unique, y compris à travers les rechargements du serveur de dev.
-// - connectionTimeoutMillis : échouer vite plutôt que pendre si la base est injoignable ;
-// - ssl : les Postgres managés fournissent souvent sslmode=require au sens libpq
-//   (chiffré, sans vérification de CA) — node-pg, lui, vérifie strictement par
-//   défaut ; on aligne sur la sémantique libpq quand l'URL le demande.
+// connectionTimeoutMillis : échouer vite plutôt que pendre si la base est injoignable.
 const pool =
   globalThis.__dbPool ??
   new Pool({
-    connectionString,
+    ...poolConfig(
+      process.env.DATABASE_URL ?? "postgres://triage:triage@localhost:5433/triage",
+    ),
     max: 10,
     connectionTimeoutMillis: 10_000,
-    ssl: /sslmode=(require|no-verify)/.test(connectionString)
-      ? { rejectUnauthorized: false }
-      : undefined,
   });
 globalThis.__dbPool = pool;
 
