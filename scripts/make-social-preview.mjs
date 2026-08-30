@@ -7,11 +7,9 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" v
   <rect width="1280" height="640" fill="#14202b"/>
   <rect x="0" y="628" width="1280" height="12" fill="#e48a72"/>
   <!-- flamme + croix -->
-  <g transform="translate(88 150) scale(0.66)">
+  <g transform="translate(88 175) scale(0.7)">
     <path d="M256 96c-40 56-104 118-104 190a104 104 0 0 0 208 0c0-72-64-134-104-190z" fill="#e48a72"/>
     <path d="M256 208c-22 30-56 64-56 102a56 56 0 0 0 112 0c0-38-34-72-56-102z" fill="#f6c9be"/>
-    <rect x="236" y="336" width="40" height="120" fill="#fff" rx="8"/>
-    <rect x="196" y="376" width="120" height="40" fill="#fff" rx="8"/>
   </g>
   <text x="420" y="235" font-family="Segoe UI, Arial, sans-serif" font-size="96" font-weight="bold" fill="#ffffff">BurnFlow</text>
   <text x="424" y="300" font-family="Segoe UI, Arial, sans-serif" font-size="34" fill="#dde5ea">Triage et orientation des brûlés</text>

@@ -6,11 +6,9 @@ import { writeFileSync } from "node:fs";
 // maskable et apple-touch-icon : le contenu reste dans la zone sûre (80 %).
 const fullBleed = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" fill="#14202b"/>
-  <g transform="translate(51.2 51.2) scale(0.8)">
+  <g transform="translate(256 256) scale(0.9) translate(-256 -243)">
     <path d="M256 96c-40 56-104 118-104 190a104 104 0 0 0 208 0c0-72-64-134-104-190z" fill="#e48a72"/>
     <path d="M256 208c-22 30-56 64-56 102a56 56 0 0 0 112 0c0-38-34-72-56-102z" fill="#f6c9be"/>
-    <rect x="236" y="336" width="40" height="120" fill="#fff" rx="8"/>
-    <rect x="196" y="376" width="120" height="40" fill="#fff" rx="8"/>
   </g>
 </svg>`;
 
