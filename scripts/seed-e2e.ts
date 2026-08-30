@@ -45,6 +45,8 @@ async function main() {
           .values({ ...s, active: true, toVerify: false })
           .returning()
       )[0]!;
+    } else if (!row.active) {
+      await db.update(sites).set({ active: true }).where(eq(sites.id, row.id));
     }
     siteIds.set(s.name, row.id);
   }
