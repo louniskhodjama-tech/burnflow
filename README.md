@@ -115,6 +115,19 @@ qu'OSRM répond.
    `https://brules.iqmed.io/api/health` → `ok`, OSRM répond, un lien magique
    arrive dans une vraie boîte, une notification push arrive sur Android.
 
+## Installation PWA (desktop et mobile)
+
+L'application est installable comme une app native (icône, plein écran,
+notifications) — cela exige **HTTPS** (ou `localhost` en dev) :
+
+- **Chrome / Edge (ordinateur et Android)** : un bandeau « Installer
+  l'application » apparaît après connexion (ou icône d'installation dans la
+  barre d'adresse). Raccourcis intégrés : nouveau patient, capacité, file
+  des avis, régulation.
+- **iPhone / iPad (Safari)** : bouton Partager → « Sur l'écran d'accueil »
+  (un guide s'affiche dans l'app).
+- Icônes régénérables depuis le logo : `node scripts/make-icons.mjs`.
+
 ## Sécurité
 
 Aucune donnée nominative patient (ID bracelet uniquement, rappelé dans l'UI).
