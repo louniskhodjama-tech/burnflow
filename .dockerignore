@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+osrm-data
+backups
+*.log
+.env
+.env.local
+.env.*.local
+docs
+data
+tests
+playwright-report
+test-results

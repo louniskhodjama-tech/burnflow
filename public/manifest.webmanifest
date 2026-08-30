@@ -1,0 +1,13 @@
+{
+  "name": "Triage brûlés",
+  "short_name": "Triage brûlés",
+  "description": "Triage et orientation des brûlés en afflux massif",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef1f3",
+  "theme_color": "#14202b",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
