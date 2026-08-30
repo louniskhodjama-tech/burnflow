@@ -102,12 +102,18 @@ transfert) affichées à l'urgentiste selon la classe du patient, reprises dans
 la fiche de transfert et visibles de l'hôpital d'accueil.
 - Le CONTENU vit dans `rules_config.protocols` (versionné, éditable par le
   régulateur dans l'écran Seuils). Textes par défaut validés le 2026-08-30
-  par le Dr Lounis Khodja M. A., avec une adaptation à la pratique algérienne :
-  antibiothérapie SYSTÉMATIQUE à large spectre à forte dose (par dérogation
-  assumée à la position ISBI/ABA « pas d'antibioprophylaxie systématique »,
-  proposée initialement et écartée par l'autorité médicale). Autres invariants
-  conservés : SAT/VAT systématique, jamais de glace, film plastique à plat,
-  réchauffement actif. Chaque déploiement reste libre d'éditer ses protocoles.
+  par le Dr Lounis Khodja M. A. Pour l'antibiothérapie, après une position
+  initiale « systématique large spectre », une revue de littérature (PubMed,
+  30/08/2026 — synthèse et références dans `docs/CLINIQUE-ATB.md`) a conduit
+  à adopter un protocole STRATIFIÉ : pas d'ATB si brûlure limitée propre vue
+  tôt ; amoxicilline-clavulanate IV forte dose sur critères (retard > 6 h,
+  souillure, afflux massif, SCB ≥ 20 %, chirurgie) ; large spectre d'emblée
+  chez le brûlé grave ventilé (seul groupe avec bénéfice de mortalité
+  démontré — Tagami, Clin Infect Dis 2016) ; fortes doses systématiques
+  (clairance rénale augmentée) ; très larges spectres réservés à l'hôpital
+  d'accueil. Autres invariants conservés : SAT/VAT systématique, jamais de
+  glace, film plastique à plat, réchauffement actif. Chaque déploiement
+  reste libre d'éditer ses protocoles.
 - Chaque section porte des « gestes cochables » ; chaque coche est un
   enregistrement nominatif horodaté (table `care_actions`, migration 0002),
   audité, repris dans la fiche de transfert imprimable et dans le détail de

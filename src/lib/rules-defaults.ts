@@ -51,17 +51,30 @@ export const DEFAULT_PROTOCOLS: ProtocolSection[] = [
     title: "Antibiothérapie & tétanos",
     classes: [1, 2, 3],
     content:
-      "Antibiothérapie SYSTÉMATIQUE à large spectre et à forte dose, débutée " +
-      "dès la prise en charge, conformément au protocole en vigueur en " +
-      "Algérie (validé par le Dr Lounis Khodja M. A.). Noter produit, dose et " +
-      "heure d'administration — repris dans la fiche de transfert pour " +
-      "l'hôpital d'accueil, qui adaptera secondairement aux prélèvements et à " +
-      "l'évolution. Ne pas retarder le transfert pour compléter une " +
-      "administration. TÉTANOS : vérifier et mettre à jour systématiquement " +
-      "le statut vaccinal (SAT/VAT) — la brûlure est une plaie à risque " +
-      "tétanigène.",
+      "ANTIBIOTHÉRAPIE STRATIFIÉE (validée par le Dr Lounis Khodja M. A. " +
+      "après revue de la littérature — voir docs/CLINIQUE-ATB.md du projet). " +
+      "1) BRÛLURE LIMITÉE, PROPRE, VUE TÔT : pas d'antibiothérapie " +
+      "systématique — soins de plaie rigoureux, SAT/VAT. " +
+      "2) ANTIBIOTHÉRAPIE PRÉCOCE À FORTE DOSE si AU MOINS UN critère : " +
+      "prise en charge retardée (> 6 h), plaie souillée ou délabrée, asepsie " +
+      "dégradée (afflux massif), SCB ≥ 20 %, chirurgie prévue. Molécule : " +
+      "amoxicilline-acide clavulanique IV — adulte 1 g × 4/j (jusqu'à " +
+      "2 g × 3/j), enfant 100 mg/kg/j en 3 à 4 injections. Allergie aux " +
+      "bêta-lactamines : clindamycine IV 600 mg × 3/j (enfant 40 mg/kg/j). " +
+      "Posologies usuelles, à adapter au protocole local. " +
+      "3) BRÛLÉ GRAVE VENTILÉ : antibiothérapie à large spectre à forte " +
+      "dose d'emblée — seul groupe avec bénéfice de mortalité démontré. " +
+      "4) FORTES DOSES justifiées si SCB ≥ 20 % : la clairance rénale " +
+      "augmentée du brûlé fait sous-doser les posologies standard. Réserver " +
+      "pipéracilline-tazobactam et carbapénèmes à l'hôpital d'accueil, sur " +
+      "documentation bactériologique. Noter produit, dose et heure — repris " +
+      "dans la fiche de transfert. Ne pas retarder le transfert pour " +
+      "compléter une administration. TÉTANOS : vérifier et mettre à jour " +
+      "systématiquement le statut vaccinal (SAT/VAT) — la brûlure est une " +
+      "plaie à risque tétanigène.",
     items: [
-      "Antibiothérapie large spectre débutée — produit, dose et heure notés",
+      "Critères d'antibiothérapie évalués (retard, souillure, SCB, ventilation)",
+      "Antibiothérapie débutée si critère présent — produit, dose et heure notés",
       "Statut antitétanique vérifié",
       "SAT/VAT administré si nécessaire",
     ],
