@@ -88,6 +88,10 @@ test("scénario complet : triage → cascade (refus, expiration, acceptation) �
        WHERE status='pending' AND cascade->0->>'siteName' LIKE 'Hôpital E2E-%'`,
     );
     await pg0.query(
+      `UPDATE sites SET active = true
+       WHERE name LIKE 'Hôpital E2E-%' OR name = 'PMA E2E'`,
+    );
+    await pg0.query(
       `INSERT INTO capacity_snapshots
          (site_id, icu_beds_free, ward_beds_free, or_available,
           burn_surgeon_present, supplies_ok, declared_total_icu,

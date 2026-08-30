@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { assessments, patients, transferRequests } from "@/db/schema";
+import { assessments, careActions, patients, transferRequests, users } from "@/db/schema";
 import { requireActor } from "@/lib/auth";
 import { ClassChip } from "@/components/class-chip";
 import { Countdown } from "@/components/countdown";
@@ -50,6 +50,17 @@ export default async function DemandeDetailPage({
       .where(eq(assessments.id, req.assessmentId))
       .limit(1)
   )[0]!;
+
+  const careDone = await db
+    .select({
+      label: careActions.label,
+      doneAt: careActions.doneAt,
+      byName: users.displayName,
+    })
+    .from(careActions)
+    .innerJoin(users, eq(users.id, careActions.byUserId))
+    .where(eq(careActions.patientId, req.patientId))
+    .orderBy(careActions.doneAt);
 
   const deadline =
     req.status === "pending" && req.hopSentAt
@@ -113,6 +124,22 @@ export default async function DemandeDetailPage({
           <p className="mt-2 text-[13px] text-muted">{assessment.parkland.text}</p>
         )}
       </section>
+
+      {careDone.length > 0 && (
+        <section className="card">
+          <h2 className="card-title">Gestes réalisés sur le terrain</h2>
+          <ul className="flex flex-col gap-0.5 text-[13px]">
+            {careDone.map((g, i) => (
+              <li key={i}>
+                ✓ {g.label}{" "}
+                <span className="text-muted">
+                  — {new Date(g.doneAt).toLocaleTimeString("fr-DZ", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {req.summary && (
         <section className="card">

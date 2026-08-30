@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { and, desc, eq, max } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/db";
-import { assessments, patients, sites } from "@/db/schema";
+import { assessments, careActions, patients, sites } from "@/db/schema";
 import { clientIp, requireActor } from "@/lib/auth";
 import { can } from "@/lib/policy";
 import { audit } from "@/lib/audit";
@@ -212,4 +213,61 @@ export async function saveAssessment(
 
   void assessmentId;
   return { ok: true, warnings: aiChecks };
+}
+
+const careToggleSchema = z.object({
+  itemKey: z.string().min(3).max(80),
+  label: z.string().min(2).max(200),
+  sectionTitle: z.string().min(2).max(120),
+  done: z.boolean(),
+});
+
+/** Coche/décoche un geste de la conduite à tenir — tracé nominativement. */
+export async function toggleCareAction(
+  patientId: string,
+  payload: z.infer<typeof careToggleSchema>,
+): Promise<{ ok: boolean; error?: string }> {
+  const actor = await requireActor("urgentiste");
+  const parsed = careToggleSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false, error: "Données invalides." };
+  const data = parsed.data;
+
+  const patient = (
+    await db.select().from(patients).where(eq(patients.id, patientId)).limit(1)
+  )[0];
+  if (!patient) return { ok: false, error: "Patient introuvable." };
+  if (!can.recordCare(actor, patient.siteId))
+    return { ok: false, error: "Accès refusé pour ce site." };
+
+  if (data.done) {
+    await db
+      .insert(careActions)
+      .values({
+        patientId,
+        itemKey: data.itemKey,
+        label: data.label,
+        sectionTitle: data.sectionTitle,
+        byUserId: actor.userId,
+      })
+      .onConflictDoNothing();
+  } else {
+    await db
+      .delete(careActions)
+      .where(
+        and(
+          eq(careActions.patientId, patientId),
+          eq(careActions.itemKey, data.itemKey),
+        ),
+      );
+  }
+  await audit({
+    userId: actor.userId,
+    role: actor.role,
+    action: data.done ? "care.check" : "care.uncheck",
+    entityType: "patient",
+    entityId: patientId,
+    after: { geste: data.label },
+    ip: await clientIp(),
+  });
+  return { ok: true };
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { adviceRequests, transferRequests, sites } from "@/db/schema";
+import { adviceRequests, careActions, transferRequests, sites, users } from "@/db/schema";
 import { requireActor } from "@/lib/auth";
 import {
   getLatestAssessment,
@@ -10,6 +10,9 @@ import {
   hoursSince,
 } from "@/lib/patients";
 import { ClassChip } from "@/components/class-chip";
+import { CarePlan, type CareChecked } from "@/components/care-plan";
+import { getCurrentRules } from "@/lib/rules";
+import { protocolsForClass, careItemKey } from "@/lib/protocols";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +54,26 @@ export default async function PatientPage({
     .from(adviceRequests)
     .where(eq(adviceRequests.patientId, id))
     .orderBy(desc(adviceRequests.createdAt));
+
+  // Conduite à tenir : sections de la classe courante + gestes déjà cochés
+  const { config } = await getCurrentRules();
+  const careSections = assessment
+    ? protocolsForClass(config.protocols, assessment.orientationClass as 1 | 2 | 3)
+    : [];
+  const careRows = assessment
+    ? await db
+        .select({
+          itemKey: careActions.itemKey,
+          doneAt: careActions.doneAt,
+          byName: users.displayName,
+        })
+        .from(careActions)
+        .innerJoin(users, eq(users.id, careActions.byUserId))
+        .where(eq(careActions.patientId, id))
+    : [];
+  const careChecked: CareChecked = {};
+  for (const r of careRows)
+    careChecked[r.itemKey] = { doneAt: r.doneAt.toISOString(), byName: r.byName };
 
   const delay = hoursSince(patient.burnedAt);
   const isUrgentiste = actor.role === "urgentiste";
@@ -162,6 +185,15 @@ export default async function PatientPage({
             Saisir le triage
           </Link>
         )
+      )}
+
+      {assessment && careSections.length > 0 && (
+        <CarePlan
+          patientId={id}
+          sections={careSections}
+          checked={careChecked}
+          readOnly={!isUrgentiste}
+        />
       )}
 
       {isUrgentiste && assessment && (

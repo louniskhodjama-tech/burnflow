@@ -436,6 +436,15 @@ export const notifications = pgTable(
 
 /* ============================== Configuration des règles ============================== */
 
+export type ProtocolSection = {
+  id: string;
+  title: string;
+  classes: (1 | 2 | 3)[];
+  content: string;
+  /** Éléments cochables par l'urgentiste (« gestes réalisés »), un par ligne. */
+  items: string[];
+};
+
 export type RulesJson = {
   reaSCB: number; // SCB ≥ x % → réa (sans signe)
   childBelow: number; // âge < x ans = signe
@@ -451,6 +460,9 @@ export type RulesJson = {
     capacityStaleHours: number; // capacité périmée après x h
     adviceReleaseMinutes: number; // avis non répondu → retour en file
   };
+  /** Conduite à tenir : sections éditables par le régulateur, versionnées.
+   *  Contenu par défaut À VALIDER par l'autorité médicale (D-015). */
+  protocols?: ProtocolSection[];
 };
 
 export const rulesConfig = pgTable("rules_config", {
@@ -482,6 +494,30 @@ export const distanceCache = pgTable(
       .defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.fromSiteId, t.toSiteId] })],
+);
+
+/* ============================== Gestes réalisés (conduite à tenir) ============================== */
+
+export const careActions = pgTable(
+  "care_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    patientId: uuid("patient_id")
+      .notNull()
+      .references(() => patients.id, { onDelete: "cascade" }),
+    /** Clé stable de l'élément (idSection:index) — le libellé est figé en copie. */
+    itemKey: text("item_key").notNull(),
+    label: text("label").notNull(),
+    sectionTitle: text("section_title").notNull(),
+    doneAt: timestamp("done_at", { withTimezone: true }).notNull().defaultNow(),
+    byUserId: uuid("by_user_id")
+      .notNull()
+      .references(() => users.id),
+  },
+  (t) => [
+    uniqueIndex("care_actions_patient_item_uq").on(t.patientId, t.itemKey),
+    index("care_actions_patient_idx").on(t.patientId),
+  ],
 );
 
 /* ============================== Audit ============================== */

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { RulesJson } from "@/db/schema";
+import type { ProtocolSection, RulesJson } from "@/db/schema";
 import { updateRulesAction } from "../actions";
 
 export function RulesForm({ initial }: { initial: RulesJson }) {
@@ -12,6 +12,14 @@ export function RulesForm({ initial }: { initial: RulesJson }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const setProtocol = (idx: number, patch: Partial<ProtocolSection>) =>
+    setV((prev) => ({
+      ...prev,
+      protocols: (prev.protocols ?? []).map((s, i) =>
+        i === idx ? { ...s, ...patch } : s,
+      ),
+    }));
 
   const num =
     (path: (n: number) => void) =>
@@ -70,6 +78,105 @@ export function RulesForm({ initial }: { initial: RulesJson }) {
             onChange={(e) => setV({ ...v, routing: { ...v.routing, protectedCenters: e.target.checked } })}
           />
         </label>
+      </section>
+
+      <section className="card">
+        <h2 className="card-title">Conduite à tenir (protocoles)</h2>
+        <p className="mb-2 text-xs text-muted">
+          Affichés à l&apos;urgentiste selon la classe du patient, repris dans la
+          fiche de transfert. Les « gestes cochables » (un par ligne) alimentent
+          la traçabilité. Contenu sous la responsabilité de l&apos;autorité
+          médicale.
+        </p>
+        <div className="flex flex-col gap-3">
+          {(v.protocols ?? []).map((s, idx) => (
+            <div key={s.id} className="rounded-lg border border-line p-2">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <input
+                  className="input-base min-h-10 flex-1 text-[14px] font-semibold"
+                  value={s.title}
+                  onChange={(e) => setProtocol(idx, { title: e.target.value })}
+                  placeholder="Titre de la section"
+                />
+                <button
+                  type="button"
+                  className="min-h-0 shrink-0 rounded border border-line bg-white px-2 py-1 text-xs text-centre"
+                  onClick={() =>
+                    setV({
+                      ...v,
+                      protocols: (v.protocols ?? []).filter((_, i) => i !== idx),
+                    })
+                  }
+                >
+                  Supprimer
+                </button>
+              </div>
+              <div className="mb-1 flex gap-3 text-[13px]">
+                {[1, 2, 3].map((k) => (
+                  <label key={k} className="flex min-h-0 items-center gap-1">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 min-h-0"
+                      checked={s.classes.includes(k as 1 | 2 | 3)}
+                      onChange={(e) =>
+                        setProtocol(idx, {
+                          classes: e.target.checked
+                            ? ([...s.classes, k] as (1 | 2 | 3)[])
+                            : s.classes.filter((x) => x !== k),
+                        })
+                      }
+                    />
+                    classe {k}
+                  </label>
+                ))}
+              </div>
+              <label className="field-label">Texte du protocole</label>
+              <textarea
+                className="input-base min-h-28 text-[13px]"
+                value={s.content}
+                maxLength={8000}
+                onChange={(e) => setProtocol(idx, { content: e.target.value })}
+              />
+              <label className="field-label mt-1">
+                Gestes cochables (un par ligne)
+              </label>
+              <textarea
+                className="input-base min-h-20 text-[13px]"
+                value={s.items.join("\n")}
+                onChange={(e) =>
+                  setProtocol(idx, {
+                    items: e.target.value
+                      .split("\n")
+                      .map((l) => l.trim())
+                      .filter(Boolean)
+                      .slice(0, 20),
+                  })
+                }
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="btn-base mt-2 w-full"
+          onClick={() =>
+            setV({
+              ...v,
+              protocols: [
+                ...(v.protocols ?? []),
+                {
+                  id: `section-${(v.protocols?.length ?? 0) + 1}-${Math.random().toString(36).slice(2, 7)}`,
+                  title: "",
+                  classes: [1, 2, 3],
+                  content: "",
+                  items: [],
+                } satisfies ProtocolSection,
+              ],
+            })
+          }
+        >
+          + Ajouter une section
+        </button>
       </section>
 
       <section className="card">

@@ -136,3 +136,15 @@ describe("brûlologue", () => {
     expect(can.updateCapacity(bru, "H1")).toBe(false);
   });
 });
+
+describe("conduite à tenir — gestes réalisés", () => {
+  it("urgentiste : coche sur SON site uniquement", () => {
+    expect(can.recordCare(urg, "S1")).toBe(true);
+    expect(can.recordCare(urg, "S9")).toBe(false);
+  });
+  it("référent, régulateur, brûlologue : lecture seule", () => {
+    expect(can.recordCare(ref, "H1")).toBe(false);
+    expect(can.recordCare(reg, "S1")).toBe(false);
+    expect(can.recordCare(bru, "S1")).toBe(false);
+  });
+});

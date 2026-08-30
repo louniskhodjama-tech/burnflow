@@ -318,6 +318,20 @@ const rulesSchema = z.object({
     capacityStaleHours: z.number().min(1).max(48),
     adviceReleaseMinutes: z.number().int().min(5).max(120),
   }),
+  protocols: z
+    .array(
+      z.object({
+        id: z.string().regex(/^[a-z0-9-]{2,40}$/),
+        title: z.string().trim().min(2).max(120),
+        classes: z
+          .array(z.union([z.literal(1), z.literal(2), z.literal(3)]))
+          .min(1),
+        content: z.string().trim().min(10).max(8000),
+        items: z.array(z.string().trim().min(2).max(200)).max(20),
+      }),
+    )
+    .max(20)
+    .optional(),
 });
 
 export async function updateRulesAction(

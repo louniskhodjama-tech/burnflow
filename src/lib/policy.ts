@@ -51,6 +51,10 @@ export const can = {
   createAdviceRequest: (a: Actor, patientTriageSiteId: string) =>
     a.role === "urgentiste" && isMember(a, patientTriageSiteId),
 
+  /** Cocher/décocher un geste de la conduite à tenir (urgentiste du site). */
+  recordCare: (a: Actor, patientTriageSiteId: string) =>
+    a.role === "urgentiste" && isMember(a, patientTriageSiteId),
+
   /** Suivi d'une demande de transfert. L'urgentiste ne voit que celles de ses sites. */
   viewTransferRequest: (
     a: Actor,

@@ -94,3 +94,20 @@ personnel durable de son détenteur :
 - contrepartie sécurité de l'abandon de l'usage unique : révocation en un
   clic, visibilité des utilisations, chaque connexion auditée nominativement,
   rate-limit inchangé. Migration `0001_codes-durables`.
+
+## D-015 — Conduite à tenir : protocoles éditables + gestes traçables (2026-08-30)
+À la demande du Dr Lounis Khodja : sections « Conduite à tenir » (remplissage,
+analgésie, antibiothérapie & tétanos, pansements détaillés, vigilance
+transfert) affichées à l'urgentiste selon la classe du patient, reprises dans
+la fiche de transfert et visibles de l'hôpital d'accueil.
+- Le CONTENU vit dans `rules_config.protocols` (versionné, éditable par le
+  régulateur dans l'écran Seuils) — les textes livrés par défaut suivent les
+  principes ISBI/EMSB (dont : PAS d'antibioprophylaxie systématique, SAT/VAT
+  systématique, jamais de glace, film plastique à plat, réchauffement actif)
+  et sont soumis à validation de l'autorité médicale de chaque déploiement.
+- Chaque section porte des « gestes cochables » ; chaque coche est un
+  enregistrement nominatif horodaté (table `care_actions`, migration 0002),
+  audité, repris dans la fiche de transfert imprimable et dans le détail de
+  la demande côté référent (« Gestes réalisés sur le terrain »).
+- Droits : seul l'urgentiste du site coche/décoche ; référent (après
+  acceptation) et régulateur lisent.
