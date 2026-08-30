@@ -24,6 +24,8 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 # Migrations SQL exécutées au démarrage (instrumentation.ts)
 COPY --from=build /app/drizzle ./drizzle
+# Prompts de l'agent, chargés à l'exécution depuis src/lib/agent/prompts
+COPY --from=build /app/src/lib/agent/prompts ./src/lib/agent/prompts
 USER app
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0
