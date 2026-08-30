@@ -23,7 +23,7 @@ Running 1 test using 1 worker
 Les 14 captures d'écran de la même exécution sont dans `docs/e2e-captures/`
 (01 → 14, nommées par étape). En complément, la **vérification des sites par
 le régulateur via l'interface** (GOAL, condition 3) a été réalisée : centres
-des brûlés de Douéra et d'Oran + 6 hôpitaux du brouillon Est marqués vérifiés
+des brûlés de Zéralda et d'Oran + 6 hôpitaux du brouillon Est marqués vérifiés
 (9 entrées `site.update` au journal d'audit).
 
 ## Déroulé et preuves (captures dans `docs/e2e-captures/`)

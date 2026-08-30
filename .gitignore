@@ -5,3 +5,8 @@ node_modules/
 .env.*.local
 *.log
 osrm-data/
+
+# Artefacts de test et de build
+test-results/
+playwright-report/
+*.tsbuildinfo
