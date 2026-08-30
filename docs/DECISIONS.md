@@ -132,3 +132,18 @@ en français avec bouton « Réessayer » — en situation de crise, l'utilisate
 réessaie d'un geste, aucune donnée n'est perdue (écritures
 transactionnelles). Si l'instabilité persiste : Restart/Redeploy du
 conteneur, vérifier le nombre d'instances, logs runtime, support PivoCloud.
+
+## D-017 — Disponibilité avant tout : le processus ne meurt plus sur un incident async (2026-08-30)
+Cause racine des « Application error » répétés en production : trois chemins
+où une micro-coupure vers la base tuait le processus Node entier —
+(1) `void boot()` : un échec des migrations au boot (base injoignable 10 s)
+devenait une promesse rejetée non gérée → crash → boucle de redémarrage ;
+(2) crons (`* * * * *`) non blindés : un rejet de `minuteTick()` tuait le
+serveur — avec ~1 requête sur 10 en échec côté plateforme, crash toutes les
+~10 min ; (3) pool pg sans écouteur `error` : une connexion au repos coupée
+émettait un événement non écouté → crash. Corrections : migrations avec 5
+tentatives puis démarrage quand même (schéma déjà à jour au cas nominal),
+crons enveloppés (échec journalisé, jamais fatal), `pool.on("error")`,
+`keepAlive` + `idleTimeoutMillis` 30 s, et filets `unhandledRejection` /
+`uncaughtException` qui journalisent sans éteindre. Sur un outil de crise,
+la disponibilité prime sur le fail-fast.

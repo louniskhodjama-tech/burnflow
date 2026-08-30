@@ -33,8 +33,20 @@ const pool =
     ),
     max: 10,
     connectionTimeoutMillis: 10_000,
+    // Réseau managé : recycler vite les connexions au repos et sonder le TCP,
+    // sinon une coupure silencieuse (NAT, redémarrage du Postgres managé)
+    // laisse des clients morts dans le pool.
+    idleTimeoutMillis: 30_000,
+    keepAlive: true,
   });
 globalThis.__dbPool = pool;
+// Sans écouteur, l'erreur d'un client AU REPOS (connexion coupée par le
+// réseau/serveur) est un événement 'error' non géré → crash du processus.
+if (pool.listenerCount("error") === 0) {
+  pool.on("error", (e) => {
+    console.error("[db] connexion au repos perdue (absorbée) :", e.message);
+  });
+}
 
 export const db = drizzle(pool, { schema });
 export type Db = typeof db;
