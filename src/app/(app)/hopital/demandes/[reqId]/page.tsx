@@ -94,8 +94,8 @@ export default async function DemandeDetailPage({
           </div>
         </div>
         <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[14px]">
-          <span>Âge : <b>{patient.age ?? "—"}</b> ans</span>
-          <span>Poids : <b>{patient.weightKg ?? "—"}</b> kg</span>
+          <span>Âge : <b>{patient.age != null ? Number(patient.age) : "—"}</b> ans</span>
+          <span>Poids : <b>{patient.weightKg != null ? Number(patient.weightKg) : "—"}</b> kg</span>
           <span>Mécanisme : <b>{MECH_LABELS[patient.mechanism]}</b></span>
           <span>Délai : <b>{delay ?? "—"}</b> h</span>
         </div>

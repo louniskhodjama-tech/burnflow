@@ -47,7 +47,7 @@ export default async function AvisQueuePage() {
                   <div className="min-w-0">
                     <div className="text-[15px] font-semibold">
                       {r.braceletId}
-                      {r.age != null ? ` · ${r.age} ans` : ""}
+                      {r.age != null ? ` · ${Number(r.age)} ans` : ""}
                       {r.scbTotal != null ? ` · SCB ${r.scbTotal} %` : ""}
                     </div>
                     <p className="mt-0.5 truncate text-[13px] text-muted">{r.question}</p>

@@ -14,7 +14,8 @@
     "db:migrate": "drizzle-kit migrate",
     "seed:sites": "tsx scripts/seed-sites.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
-    "distances:rebuild": "tsx scripts/distances-rebuild.ts"
+    "distances:rebuild": "tsx scripts/distances-rebuild.ts",
+    "seed:e2e": "tsx scripts/seed-e2e.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

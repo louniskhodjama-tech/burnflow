@@ -32,10 +32,22 @@ occupation = 1 − libres/max(...). Approximation documentée dans l'UI (« occu
 Le déploiement cible est un seul conteneur `app`. Fenêtre glissante en mémoire :
 10 tentatives / 15 min par IP et par identifiant sur `/login` (email et code). Pas de Redis.
 
-## D-007 — pnpm en mode `node-linker=hoisted`
-Le dossier de travail est sous OneDrive (Windows). Les liens symboliques du store pnpm y sont
-fragiles ; le mode hoisted copie les fichiers. Recommandation utilisateur : exclure
-`node_modules/` de la synchronisation OneDrive.
+## D-007 — Projet déplacé hors OneDrive (2026-08-30)
+Constaté en dev sous OneDrive (Windows) : « Fichiers à la demande » déshydrate
+des fichiers fraîchement écrits de `.next` (`readlink EINVAL`) et le moteur de
+synchronisation les verrouille pendant l'upload (`EBUSY`), cassant le serveur
+Next de façon aléatoire — l'épinglage `attrib +P` n'a pas suffi. Décision :
+le dépôt de travail vit désormais dans **`C:\dev	riage-brules`** (hors
+synchronisation). L'ancien emplacement contient un panneau `PROJET-DEPLACE.md`.
+Historique git, base Docker (volume nommé) et conteneurs conservés. Pour la
+sauvegarde cloud du code : un remote git, pas un dossier synchronisé.
+Sans impact en production (Docker/Linux).
+
+## D-011 — `output: standalone` uniquement dans l'image Docker
+La copie des fichiers tracés du build standalone crée des symlinks, interdits
+sous Windows sans mode développeur (EPERM). `next.config.ts` n'active
+`standalone` que si `BUILD_STANDALONE=1` (positionné dans le Dockerfile).
+`pnpm build` local reste possible sans privilèges.
 
 ## D-008 — Postgres dev exposé sur le port hôte 5433
 Pour éviter tout conflit avec un Postgres local existant. Dans Docker, le service reste `postgres:5432`.

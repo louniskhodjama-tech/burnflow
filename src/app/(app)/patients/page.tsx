@@ -106,7 +106,7 @@ export default async function PatientsPage({
                     <div className="text-[17px] font-semibold">{p.braceletId}</div>
                     <div className="text-xs text-muted">
                       {p.siteName}
-                      {p.age != null ? ` · ${p.age} ans` : ""}
+                      {p.age != null ? ` · ${Number(p.age)} ans` : ""}
                       {" · "}
                       {new Date(p.createdAt).toLocaleTimeString("fr-DZ", {
                         hour: "2-digit",

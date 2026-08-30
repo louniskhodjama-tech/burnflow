@@ -38,13 +38,23 @@ export function PushManager({ vapidKey }: { vapidKey: string | null }) {
   const [state, setState] = useState<"hidden" | "prompt" | "error">("hidden");
 
   useEffect(() => {
-    if (!vapidKey) return;
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    if (Notification.permission === "granted") {
-      void subscribe(vapidKey).catch(() => {});
-    } else if (Notification.permission === "default") {
-      const dismissed = localStorage.getItem("push-dismissed");
-      if (!dismissed) setState("prompt");
+    try {
+      if (!vapidKey) return;
+      // iOS Safari hors PWA n'expose pas Notification : ne jamais planter.
+      if (
+        !("serviceWorker" in navigator) ||
+        !("PushManager" in window) ||
+        !("Notification" in window)
+      )
+        return;
+      if (Notification.permission === "granted") {
+        void subscribe(vapidKey).catch(() => {});
+      } else if (Notification.permission === "default") {
+        const dismissed = localStorage.getItem("push-dismissed");
+        if (!dismissed) setState("prompt");
+      }
+    } catch {
+      // stockage bloqué ou API indisponible : pas de bandeau, pas d'erreur
     }
   }, [vapidKey]);
 

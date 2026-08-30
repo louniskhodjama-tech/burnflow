@@ -89,8 +89,8 @@ export default async function PatientPage({
       <section className="card">
         <h2 className="card-title">Patient</h2>
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[15px]">
-          <Info label="Âge" value={patient.age != null ? `${patient.age} ans` : "—"} />
-          <Info label="Poids est." value={patient.weightKg != null ? `${patient.weightKg} kg` : "—"} />
+          <Info label="Âge" value={patient.age != null ? `${Number(patient.age)} ans` : "—"} />
+          <Info label="Poids est." value={patient.weightKg != null ? `${Number(patient.weightKg)} kg` : "—"} />
           <Info label="Mécanisme" value={MECH_LABELS[patient.mechanism] ?? patient.mechanism} />
           <Info label="Délai" value={delay != null ? `${delay} h` : "—"} />
         </div>

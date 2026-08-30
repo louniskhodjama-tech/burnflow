@@ -51,9 +51,9 @@ Mis à jour à chaque commit de jalon.
 | M3 | ✅ fait — capacité, ± , confirmer inchangé, péremption |
 | M4 | ✅ fait — cascade, refus, expiration cron, acceptation + lit réservé, forçage lib |
 | M5 | ✅ fait — file, prise exclusive, réponse, relâche auto 15 min |
-| M6 | en cours — envoi push/email câblé ; reste SW + abonnement UI |
-| M7 | en cours — 3 capacités écrites ; rapport 6 h déterministe fait |
-| M8 | à faire |
-| M9 | à faire |
-| M10 | à faire |
+| M6 | ✅ fait — SW, abonnement par appareil, push cliquable |
+| M7 | ✅ fait — cohérence, fiche rédigée, synthèse avis (fail-open) ; rapport 6 h déterministe |
+| M8 | ✅ fait (commit fa19deb) |
+| M9 | ✅ fait — CSV Est importé, vérifications via interface |
+| M10 | ✅ **fait — scénario E2E PASSÉ (37 s, build prod)** + docs |
 | M11 | **bloqué — VPS non fourni** |

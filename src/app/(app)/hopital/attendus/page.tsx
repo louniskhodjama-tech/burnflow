@@ -75,7 +75,7 @@ export default async function AttendusPage() {
                     {r.braceletId}
                   </Link>
                   <div className="text-xs text-muted">
-                    {r.age != null ? `${r.age} ans · ` : ""}
+                    {r.age != null ? `${Number(r.age)} ans · ` : ""}
                     {r.status === "forced" ? "orienté par la régulation · " : ""}
                     accepté à{" "}
                     {r.acceptedAt
