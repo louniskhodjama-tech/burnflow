@@ -61,3 +61,21 @@ de transfert ni les capacités (matrice des rôles).
 Généré côté serveur sans dépendance lourde : rendu HTML → impression navigateur (`window.print`)
 sur une route dédiée `print`, plus export texte. Si un vrai PDF binaire devient nécessaire,
 `@react-pdf/renderer` sera ajouté (non requis par le GOAL, qui demande « exportable en PDF »).
+
+## D-012 — Authentification par codes d'accès uniquement (décision utilisateur, 2026-08-30)
+Le lien magique par email est retiré (page /login, action serveur et route
+/auth/verify supprimées ; la table `magic_links` reste en base, inutilisée,
+pour éviter une migration destructive). Cela remplace l'exigence initiale du
+GOAL « lien magique ET code ».
+
+Le code est **personnel et nominatif** : chaque code est généré POUR un compte
+précis (`access_codes.user_id`), la session ouverte est celle de ce compte, et
+toutes les actions sont tracées à son nom dans `audit_log`. Rendu visible :
+le nom du connecté est affiché en permanence dans l'en-tête, le régulateur
+voit la dernière connexion de chaque compte, et l'écran de génération rappelle
+que le code ne doit être transmis qu'à son destinataire.
+
+Anti-verrouillage (les codes étant la seule porte) : `pnpm gen:code <email> [n]`
+génère des codes depuis le serveur (documenté au RUNBOOK) ; `pnpm seed:demo`
+en régénère pour les comptes de démonstration. Les emails restent utilisés
+pour les NOTIFICATIONS (pas pour l'auth).

@@ -1,6 +1,6 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray, max } from "drizzle-orm";
 import { db } from "@/db";
-import { memberships, sites, users } from "@/db/schema";
+import { auditLog, memberships, sites, users } from "@/db/schema";
 import { requireActor } from "@/lib/auth";
 import { NewUserForm, UserRow } from "./user-forms";
 
@@ -19,6 +19,18 @@ export default async function UsersPage() {
     })
     .from(memberships)
     .innerJoin(sites, eq(sites.id, memberships.siteId));
+  // Dernière connexion : depuis le journal d'audit (immuable), pas depuis les
+  // sessions vivantes (supprimées à la déconnexion).
+  const lastLogins = await db
+    .select({
+      userId: auditLog.userId,
+      lastAt: max(auditLog.createdAt),
+    })
+    .from(auditLog)
+    .where(inArray(auditLog.action, ["login.code", "login.magic_link"]))
+    .groupBy(auditLog.userId);
+  const lastByUser = new Map(lastLogins.map((l) => [l.userId, l.lastAt]));
+
   const allSites = await db
     .select({ id: sites.id, name: sites.name, kind: sites.kind })
     .from(sites)
@@ -55,6 +67,7 @@ export default async function UsersPage() {
                 isAdmin: u.isAdmin,
                 active: u.active,
                 siteNames: sitesByUser.get(u.id) ?? [],
+                lastLoginAt: lastByUser.get(u.id)?.toISOString() ?? null,
               }}
             />
           ))}

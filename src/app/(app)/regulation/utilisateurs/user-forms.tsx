@@ -26,6 +26,7 @@ export function UserRow({
     isAdmin: boolean;
     active: boolean;
     siteNames: string[];
+    lastLoginAt: string | null;
   };
 }) {
   const router = useRouter();
@@ -43,8 +44,13 @@ export function UserRow({
           </div>
           <div className="truncate text-xs text-muted">
             {ROLE_LABELS[user.role]}
-            {user.email ? ` · ${user.email}` : " · sans email (codes uniquement)"}
+            {user.email ? ` · ${user.email}` : ""}
             {user.siteNames.length ? ` · ${user.siteNames.join(", ")}` : ""}
+          </div>
+          <div className="text-xs text-muted">
+            {user.lastLoginAt
+              ? `Dernière connexion : ${new Date(user.lastLoginAt).toLocaleString("fr-DZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+              : "Jamais connecté"}
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -81,8 +87,10 @@ export function UserRow({
       {code && (
         <div className="mt-2 rounded-lg border border-chir bg-chir/5 p-2">
           <p className="text-[13px]">
-            Code d&apos;accès (24 h, usage unique) — transmettez-le oralement, il ne
-            sera plus affiché :
+            Code <b>personnel</b> de <b>{user.displayName}</b> (24 h, usage
+            unique) — à transmettre oralement à cette personne uniquement.
+            Toute action faite avec ce code sera tracée à son nom. Il ne sera
+            plus affiché :
           </p>
           <p className="mt-1 text-center font-mono text-2xl font-bold tracking-[0.2em]">
             {code}

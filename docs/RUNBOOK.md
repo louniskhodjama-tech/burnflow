@@ -34,9 +34,9 @@ pnpm distances:rebuild --only-estimates
    plus simple : régénérer un lien magique et lire les logs :
    `docker compose logs --tail 100 app | grep email`.
 3. Fournisseur : vérifier SPF/DKIM du domaine d'envoi (sinon spam/rejet).
-4. **Contournement immédiat** : la connexion par **code d'accès** ne dépend pas
-   de l'email — le régulateur génère un code dans /regulation/utilisateurs et
-   le transmet oralement. Les notifications push continuent de fonctionner.
+4. **L'authentification n'est PAS touchée** : elle se fait par codes d'accès,
+   sans email (D-012). Seules les notifications par email sont dégradées ;
+   les notifications push continuent de fonctionner.
 5. En dev : Mailpit doit tourner (`docker compose up -d mailpit`, UI :8025).
 
 ## 3 · Forcer un transfert à la main
@@ -85,11 +85,16 @@ Un hôpital n'est candidat que si sa capacité date de moins de
 Le référent reçoit une relance automatique (push/email) après péremption.
 Bouton « Confirmer inchangé » suffit à rafraîchir l'horodatage.
 
-## 6 · Codes d'accès / connexion
+## 6 · Codes d'accès / connexion (seule voie d'authentification)
 
+- Le code est **personnel** : généré pour UN compte, il ouvre la session de ce
+  compte et toutes les actions sont tracées à ce nom. Ne jamais le partager.
 - Code invalide = déjà utilisé (usage unique), expiré (24 h) ou mal saisi.
   → en générer un nouveau : /regulation/utilisateurs → « Code ».
 - Trop de tentatives → rate-limit 15 min. Attendre ou changer de réseau.
+- **Plus aucun régulateur ne peut se connecter** (verrouillage) : sur le
+  serveur, `pnpm gen:code <email-du-régulateur>` génère un code de secours ;
+  `pnpm gen:code --list` liste les comptes.
 
 ## 7 · Sauvegarde et restauration Postgres
 

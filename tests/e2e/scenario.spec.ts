@@ -1,5 +1,6 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
 import { Client } from "pg";
+import { createHash, randomBytes } from "node:crypto";
 import fs from "node:fs";
 
 /**
@@ -9,14 +10,14 @@ import fs from "node:fs";
  * lit réservé ; l'urgentiste voit la destination ; un brûlologue prend un
  * avis et répond ; le référent marque l'arrivée ; le régulateur voit tout.
  *
- * Pré-requis : docker compose up -d postgres mailpit && pnpm seed:e2e
+ * Pré-requis : docker compose up -d postgres && pnpm seed:e2e
+ * (mailpit reste utile pour les emails de notification, pas pour l'auth)
  * (le webServer Playwright démarre l'app).
  *
  * L'expiration du hop 2 est provoquée en reculant hop_sent_at en base
  * (le job cron réel fait la bascule) — documenté dans docs/E2E-REPORT.md.
  */
 
-const MAILPIT = process.env.MAILPIT_URL ?? "http://localhost:8025";
 const DB_URL =
   process.env.DATABASE_URL ?? "postgres://triage:triage@localhost:5433/triage";
 const CAPTURES = "docs/e2e-captures";
@@ -32,37 +33,34 @@ async function capture(page: Page, name: string): Promise<void> {
   });
 }
 
-async function loginByMagicLink(browser: Browser, email: string): Promise<Page> {
+async function loginByCode(browser: Browser, email: string): Promise<Page> {
+  // Génère un code d'accès directement en base (ce que ferait le régulateur
+  // via l'interface), puis se connecte par le formulaire — auth par codes
+  // uniquement (DECISIONS D-012).
+  const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(8);
+  let code = "";
+  for (let i = 0; i < 8; i++) code += ALPHABET[bytes[i]! % ALPHABET.length];
+  const hash = createHash("sha256").update(code).digest("hex");
+
+  const pg = new Client({ connectionString: DB_URL });
+  await pg.connect();
+  const res = await pg.query(
+    `INSERT INTO access_codes (code_hash, user_id, created_by, expires_at)
+     SELECT $1, u.id, u.id, now() + interval '1 hour'
+     FROM users u WHERE u.email = $2 AND u.active
+     RETURNING id`,
+    [hash, email],
+  );
+  await pg.end();
+  expect(res.rowCount, `compte actif pour ${email}`).toBe(1);
+
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto("/login");
   await page.waitForLoadState("networkidle");
-  await page.getByLabel("Adresse email professionnelle").fill(email);
-  await page.getByRole("button", { name: "Recevoir le lien de connexion" }).click();
-  await expect(page).toHaveURL(/sent=1/);
-
-  // Récupère le lien magique réellement reçu (Mailpit) — uniquement un
-  // message postérieur à la demande (évite les vieux jetons déjà consommés).
-  const requestedAt = Date.now() - 5_000;
-  let url: string | null = null;
-  for (let i = 0; i < 40 && !url; i++) {
-    const res = await fetch(
-      `${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}&limit=1`,
-    );
-    const json = (await res.json()) as {
-      messages?: { ID: string; Created: string }[];
-    };
-    const head = json.messages?.[0];
-    if (head && new Date(head.Created).getTime() >= requestedAt) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${head.ID}`)).json()) as {
-        Text?: string;
-      };
-      url = msg.Text?.match(/https?:\/\/\S+\/auth\/verify\?token=\S+/)?.[0] ?? null;
-    }
-    if (!url) await page.waitForTimeout(500);
-  }
-  expect(url, `lien magique reçu pour ${email}`).toBeTruthy();
-  await page.goto(url!);
+  await page.getByLabel("Code d'accès").fill(code);
+  await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page).not.toHaveURL(/login/);
   return page;
 }
@@ -103,7 +101,7 @@ test("scénario complet : triage → cascade (refus, expiration, acceptation) �
   }
 
   /* ---- 1 · Urgentiste : création du patient ---- */
-  const urg = await loginByMagicLink(browser, "urg@e2e.local");
+  const urg = await loginByCode(browser, "urg@e2e.local");
   await gotoReady(urg, "/patients/new");
   await urg.getByLabel(/ID bracelet/).fill(BRACELET);
   await urg.getByLabel("Âge (ans)").fill("34");
@@ -137,7 +135,7 @@ test("scénario complet : triage → cascade (refus, expiration, acceptation) �
   const transferUrl = urg.url();
 
   /* ---- 4 · Hôpital A refuse (motif obligatoire) ---- */
-  const refA = await loginByMagicLink(browser, "refa@e2e.local");
+  const refA = await loginByCode(browser, "refa@e2e.local");
   await gotoReady(refA, "/hopital/demandes");
   await refA.getByText(BRACELET).click();
   await expect(refA.getByText("Bilan clinique")).toBeVisible();
@@ -172,7 +170,7 @@ test("scénario complet : triage → cascade (refus, expiration, acceptation) �
   await capture(urg, "urgentiste-expiration-hopC");
 
   /* ---- 6 · Hôpital C accepte → lit réservé ---- */
-  const refC = await loginByMagicLink(browser, "refc@e2e.local");
+  const refC = await loginByCode(browser, "refc@e2e.local");
   await gotoReady(refC, "/hopital/demandes");
   // La liste est rendue côté serveur : recharge jusqu'à voir la demande.
   await expect(async () => {
@@ -226,7 +224,7 @@ test("scénario complet : triage → cascade (refus, expiration, acceptation) �
   await urg.getByRole("button", { name: "Envoyer la demande d'avis" }).click();
   await expect(urg).toHaveURL(/avis=envoye/);
 
-  const bru = await loginByMagicLink(browser, "bru@e2e.local");
+  const bru = await loginByCode(browser, "bru@e2e.local");
   await gotoReady(bru, "/avis");
   await bru.getByText(BRACELET).click();
   await bru.waitForLoadState("networkidle");
@@ -255,7 +253,7 @@ test("scénario complet : triage → cascade (refus, expiration, acceptation) �
   await capture(refC, "referentC-arrive");
 
   /* ---- 10 · Le régulateur voit tout dans le journal ---- */
-  const reg = await loginByMagicLink(browser, "reg@e2e.local");
+  const reg = await loginByCode(browser, "reg@e2e.local");
   await gotoReady(reg, "/regulation/demandes");
   await reg.getByText(BRACELET).click();
   await expect(reg.getByText("Journal complet")).toBeVisible();

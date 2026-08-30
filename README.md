@@ -16,8 +16,9 @@ peut l'être selon les critères ISBI.
 ## Stack
 
 Next.js 15 (App Router, TypeScript strict, full-stack) · PostgreSQL 16 +
-Drizzle ORM (migrations versionnées) · auth maison (lien magique 15 min +
-codes d'accès 8 caractères, sessions cookie httpOnly) · Nodemailer (SMTP) ·
+Drizzle ORM (migrations versionnées) · auth maison par codes d'accès
+personnels à 8 caractères (sessions cookie httpOnly ; voir DECISIONS D-012) ·
+Nodemailer (SMTP, notifications) ·
 web-push (VAPID) · OSRM self-hosted (secours haversine) · SDK Anthropic
 (`claude-sonnet-4-6`, serveur uniquement, fail-open) · Tailwind 4 ·
 Vitest + Playwright · Docker Compose (app, postgres, osrm, mailpit dev).
@@ -35,8 +36,10 @@ pnpm seed:demo                          # 10 sites, 4 comptes (1/rôle), capacit
 pnpm dev                                # http://localhost:3000
 ```
 
-Connexion : les codes d'accès imprimés par `seed:demo`, ou lien magique
-(l'email arrive dans Mailpit : http://localhost:8025).
+Connexion : par code d'accès personnel uniquement (D-012) — codes imprimés
+par `seed:demo`, ou `pnpm gen:code <email> [n]` pour un compte précis.
+Le régulateur en génère aussi depuis /regulation/utilisateurs. Mailpit
+(http://localhost:8025) ne sert qu'aux emails de notification.
 
 ### Variables d'environnement (`.env.local`)
 
@@ -63,6 +66,7 @@ pnpm test:e2e    # scénario complet Playwright (nécessite postgres+mailpit et 
 | Commande | Effet |
 |---|---|
 | `pnpm seed:demo` | données de démonstration + codes d'accès frais |
+| `pnpm gen:code <email> [n]` | codes d'accès personnels pour un compte (`--list` : comptes) |
 | `pnpm seed:sites data/sites.east-draft.csv` | import CSV de sites (inactifs, à vérifier) |
 | `pnpm seed:e2e` | contexte du scénario Playwright |
 | `pnpm distances:rebuild [--only-estimates]` | recalcul de la table de distances |

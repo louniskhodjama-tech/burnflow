@@ -23,9 +23,16 @@ export default async function AppLayout({
             Triage brûlés
           </Link>
           <div className="flex items-center gap-2">
-            <span className="rounded-md bg-bg px-2 py-1 text-xs font-medium text-ink">
-              {ROLE_LABELS[actor.role]}
-              {actor.isAdmin ? " · admin" : ""}
+            <span
+              className="max-w-[45vw] truncate rounded-md bg-bg px-2 py-1 text-xs font-medium text-ink"
+              title={`${actor.displayName} — ${ROLE_LABELS[actor.role]}`}
+            >
+              {actor.displayName}
+              <span className="text-muted">
+                {" · "}
+                {ROLE_LABELS[actor.role]}
+                {actor.isAdmin ? " · admin" : ""}
+              </span>
             </span>
             <form action="/logout" method="post">
               <button
