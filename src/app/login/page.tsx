@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getActor, homeForRole } from "@/lib/auth";
 import { loginWithCode } from "./actions";
+import { InstallPrompt } from "@/components/install-prompt";
 
 export const metadata = { title: "Connexion — Triage brûlés" };
 
@@ -15,6 +16,7 @@ export default async function LoginPage({
 
   return (
     <main className="mx-auto max-w-md px-3 pb-16">
+      <InstallPrompt />
       <header className="px-1 pt-6 pb-2">
         <h1 className="text-sm font-semibold uppercase tracking-wider text-muted">
           Triage brûlés · connexion
