@@ -151,10 +151,27 @@ téléphone en veille.
 
 Un `docker-compose.yml` complet (app + PostgreSQL + OSRM) et un
 `Dockerfile` multi-étages sont fournis ; les migrations s'appliquent au
-démarrage. Fonctionne aussi sur les plateformes d'hébergement d'applications
-(PaaS) avec PostgreSQL managé. Amorçage d'une base de production vide
-(migrations + premier régulateur admin + son code d'accès) :
-`DATABASE_URL=<prod> pnpm tsx scripts/bootstrap-prod.ts <email> <nom>`. Guide pas à pas (Dokploy ou tout hôte Docker), sauvegardes
+démarrage (`RUN_MIGRATIONS_ON_BOOT=1`). Fonctionne aussi sur les plateformes
+d'hébergement d'applications (PaaS) avec PostgreSQL managé — c'est ainsi que
+tourne l'instance de référence (PivoCloud, données en Algérie).
+
+**Mise en production d'une base vide, en trois commandes** (depuis un poste
+disposant du dépôt, `<prod>` étant l'URL de la base de production) :
+
+```bash
+# 1. Migrations + configuration clinique v1 + premier RÉGULATEUR admin
+#    (son code d'accès personnel s'affiche une seule fois)
+DATABASE_URL=<prod> pnpm tsx scripts/bootstrap-prod.ts <email> <Nom Affiché>
+
+# 2. Import des hôpitaux (inactifs, « à vérifier » — le régulateur les
+#    valide puis les active dans l'interface, écran Sites)
+DATABASE_URL=<prod> pnpm tsx scripts/seed-sites.ts data/sites.east-draft.csv
+
+# 3. (facultatif) codes d'accès supplémentaires pour un compte existant
+DATABASE_URL=<prod> pnpm tsx scripts/gen-code.ts <email> [nombre] [jours]
+```
+
+Adaptez le CSV à votre région à partir de `data/sites.template.csv`. Guide pas à pas (Dokploy ou tout hôte Docker), sauvegardes
 quotidiennes et conduite d'incident : [docs/RUNBOOK.md](docs/RUNBOOK.md).
 Cahier des charges d'origine : [docs/GOAL.md](docs/GOAL.md) · décisions
 d'architecture : [docs/DECISIONS.md](docs/DECISIONS.md) · matrice des
