@@ -249,7 +249,14 @@ export function NewUserForm({
           <option value="regulateur">Régulateur</option>
           <option value="brulologue">Brûlologue consultant</option>
         </select>
-        {needsSites && (
+        {needsSites && eligibleSites.length === 0 && (
+          <p className="rounded-lg border border-line bg-bg px-2 py-2 text-[13px] text-muted">
+            {v.role === "urgentiste"
+              ? "Aucun point médical n'existe encore : créez-le d'abord dans Régulation → Sites (type « Point médical »), puis revenez rattacher l'urgentiste."
+              : "Aucun hôpital n'existe encore : créez-le d'abord dans Régulation → Sites."}
+          </p>
+        )}
+        {needsSites && eligibleSites.length > 0 && (
           <div className="max-h-48 overflow-y-auto rounded-lg border border-line p-1">
             {eligibleSites.map((s) => (
               <label key={s.id} className="flex min-h-10 items-center gap-2 border-b border-line px-1 text-[14px] last:border-b-0">
