@@ -89,20 +89,27 @@ export async function updateSiteAction(
   const actor = await requireActor("regulateur");
   if (!can.manageSites(actor)) return { ok: false, error: "Accès refusé." };
 
+  const parsed = siteSchema
+    .partial()
+    .extend({ active: z.boolean().optional(), toVerify: z.boolean().optional() })
+    .safeParse(payload);
+  if (!parsed.success) return { ok: false, error: "Champs invalides." };
+  const patch = parsed.data;
+
   const before = (
     await db.select().from(sites).where(eq(sites.id, siteId)).limit(1)
   )[0];
   if (!before) return { ok: false, error: "Site introuvable." };
 
   // Ne jamais activer un site non vérifié (GOAL §Données hôpitaux).
-  const willVerify = payload.toVerify ?? before.toVerify;
-  const willActive = payload.active ?? before.active;
+  const willVerify = patch.toVerify ?? before.toVerify;
+  const willActive = patch.active ?? before.active;
   if (willActive && willVerify)
     return { ok: false, error: "Vérifiez le site avant de l'activer." };
 
   await db
     .update(sites)
-    .set({ ...payload, updatedAt: new Date() })
+    .set({ ...patch, updatedAt: new Date() })
     .where(eq(sites.id, siteId));
   await audit({
     userId: actor.userId,
@@ -111,7 +118,7 @@ export async function updateSiteAction(
     entityType: "site",
     entityId: siteId,
     before: { active: before.active, toVerify: before.toVerify, name: before.name },
-    after: payload,
+    after: patch,
     ip: await clientIp(),
   });
   revalidatePath("/regulation/sites");

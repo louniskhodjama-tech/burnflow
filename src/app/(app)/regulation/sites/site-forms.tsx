@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { CoordPicker } from "@/components/coord-picker";
 import { createSiteAction, updateSiteAction } from "../actions";
 
 const KIND_LABELS: Record<string, string> = {
@@ -80,8 +81,68 @@ export function SiteRow({ site }: { site: Site }) {
           </span>
         </div>
       </div>
+      {site.toVerify && <PositionVerifier site={site} />}
       {error && <p className="mt-1 text-xs text-centre">{error}</p>}
     </li>
+  );
+}
+
+/**
+ * Vérification visuelle de la position avant « Marquer vérifié » : l'épingle
+ * sur la carte dit immédiatement si les coordonnées importées sont bonnes.
+ * La carte n'est montée qu'à l'ouverture (26 sites = pas 26 cartes).
+ */
+function PositionVerifier({ site }: { site: Site }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [lat, setLat] = useState(String(site.lat));
+  const [lng, setLng] = useState(String(site.lng));
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const dirty = lat !== String(site.lat) || lng !== String(site.lng);
+
+  return (
+    <details
+      className="mt-1"
+      open={open}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+    >
+      <summary className="cursor-pointer list-none text-[13px] text-muted underline">
+        Vérifier la position sur la carte
+      </summary>
+      {open && (
+        <div className="mt-2 flex flex-col gap-2">
+          <CoordPicker
+            lat={lat}
+            lng={lng}
+            onChange={(a, b) => {
+              setLat(a);
+              setLng(b);
+            }}
+          />
+          {dirty && (
+            <button
+              className="btn-primary"
+              disabled={pending}
+              onClick={() =>
+                startTransition(async () => {
+                  setError(null);
+                  const res = await updateSiteAction(site.id, {
+                    lat: Number(lat.replace(",", ".")),
+                    lng: Number(lng.replace(",", ".")),
+                  });
+                  if (res.ok) router.refresh();
+                  else setError(res.error ?? "Erreur.");
+                })
+              }
+            >
+              {pending ? "…" : "Enregistrer la position corrigée"}
+            </button>
+          )}
+          {error && <p className="text-xs text-centre">{error}</p>}
+        </div>
+      )}
+    </details>
   );
 }
 
@@ -122,10 +183,11 @@ export function NewSiteForm() {
         </select>
         <input className="input-base" placeholder="Nom complet" value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} />
         <input className="input-base" placeholder="Wilaya" value={v.wilaya} onChange={(e) => setV({ ...v, wilaya: e.target.value })} />
-        <div className="flex gap-2">
-          <input className="input-base" placeholder="Latitude (ex. 36.75)" inputMode="decimal" value={v.lat} onChange={(e) => setV({ ...v, lat: e.target.value })} />
-          <input className="input-base" placeholder="Longitude (ex. 5.06)" inputMode="decimal" value={v.lng} onChange={(e) => setV({ ...v, lng: e.target.value })} />
-        </div>
+        <CoordPicker
+          lat={v.lat}
+          lng={v.lng}
+          onChange={(lat, lng) => setV({ ...v, lat, lng })}
+        />
         <input className="input-base" placeholder="Téléphone du service (optionnel)" value={v.phone} onChange={(e) => setV({ ...v, phone: e.target.value })} />
       </div>
       {error && <p className="mt-2 text-[14px] text-centre">{error}</p>}
